@@ -1,6 +1,6 @@
 # LATTICERUNNER // Autonomous C2 Simulation
 
-**Live Deployment:** (Link Coming Soon)  
+**Live Deployment:** https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/  
 **Status:** v21.7 (Stable)
 
 ### 1. Project Objective
