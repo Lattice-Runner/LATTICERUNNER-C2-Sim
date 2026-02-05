@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LATTICERUNNER // 21.6 — STABILITY PATCHED</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+<style>
+    body{margin:0;background:#000;color:#0f0;font-family:monospace;overflow:hidden; text-shadow: 1px 1px 2px #000;}
+    #map{width:100vw;height:100vh;position:absolute}
+    
+    /* UI ELEMENTS */
+    #hud{
+        position:absolute; top:10px; left:10px;
+        background:rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+        padding:12px; border:1px solid #0f0; border-radius:8px;
+        z-index: 20; 
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.15);
+        max-width: 340px; width: 100%;
+    }
+
+    #killfeed{
+        position:absolute; left:10px; bottom:10px;
+        background:rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        padding:10px; border:1px solid #0f0; border-radius:4px;
+        width: 340px; max-height: 160px; 
+        overflow-y:auto; font-size:11px; z-index: 10;
+        pointer-events: none; 
+    }
+
+    #recommendationBox{
+        position:absolute; right:10px; top:10px;
+        background:rgba(0,0,0,0.6);
+        backdrop-filter: blur(5px);
+        padding:15px; border:1px solid #0f0; border-radius:8px;
+        font-size:13px; line-height:1.1; width:300px; z-index:10;
+    }
+
+    #roadrunnerStatus{
+        position:absolute; right:10px; bottom:180px; 
+        background:rgba(0,0,0,0.6);
+        backdrop-filter: blur(5px);
+        padding:10px; border:1px solid #0f0; border-radius:8px;
+        font-size:11px; line-height:1.0; width:300px;
+        z-index:10;
+    }
+    
+    .status-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+
+    #telemetry{
+        position:absolute; right:10px; bottom:10px;
+        background:rgba(0,0,0,0.6);
+        backdrop-filter: blur(5px);
+        padding:12px; border:1px solid #0f0; border-radius:8px;
+        font-size:12px; line-height:1.4; width:300px; z-index:10;
+    }
+
+    #nowPlaying{
+        position:absolute; top:10px; left: 370px;
+        padding:8px 12px; border:1px solid #0f0;
+        background:rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        color:#0f0; border-radius:8px; z-index:10;
+        font-size:12px; font-weight:bold; width:220px; 
+        overflow:hidden;
+        display: flex; flex-direction: column;
+    }
+    
+    #np-artist { color: #00ffaa; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #np-track-mask { width: 100%; overflow: hidden; white-space: nowrap; position: relative; height: 16px; }
+    .song-title-container{ display:inline-block; padding-left:100%; animation:marquee 10s linear infinite; }
+    @keyframes marquee{0%{transform:translate(0,0)}100%{transform:translate(-100%,0)}}
+    
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px; }
+    
+    button{
+        background:rgba(0, 50, 0, 0.6); color:#0f0; border: 1px solid #0f0;
+        padding:8px 10px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px; 
+        width: 100%; transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
+    }
+    button:hover{background:rgba(0, 255, 0, 0.2); box-shadow: 0 0 5px #0f0;}
+    button:active{background:rgba(0, 255, 0, 0.4);}
+    button:disabled{border-color:#004400; color:#005500; background:rgba(0,0,0,0.5); cursor:default; box-shadow:none;}
+    
+    #furyBtn:disabled { border-color: #005555; color: #004444; }
+    #furyBtn { margin-bottom: 5px; }
+    
+    #wave{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(50, 0, 0, 0.8);backdrop-filter: blur(4px);color:#f00;padding:20px 40px;border:4px solid #f00;border-radius:12px;font-size:36px;font-weight:bold;z-index:100;opacity:0;transition:opacity .3s; pointer-events:none;}
+    #wave.active{opacity:1}
+    .base-hit{position:absolute;top:0;left:0;width:100vw;height:100vh;background-color:rgba(255,0,0,0.4);pointer-events:none;opacity:0;transition:opacity .1s;z-index:99}
+    .dot{opacity:0;animation:pulse 1.5s infinite}
+    .dot1{animation-delay:0s} .dot2{animation-delay:.5s} .dot3{animation-delay:1s}
+    @keyframes pulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+    #killfeed::-webkit-scrollbar {width: 4px;}
+    #killfeed::-webkit-scrollbar-track {background: rgba(0,0,0,0.2);}
+    #killfeed::-webkit-scrollbar-thumb {background: #0f0;}
+
+    /* --- GAME OVER SCREEN --- */
+    #gameOverScreen {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        border: 2px solid #f00;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        z-index: 200; 
+        display: none; 
+        box-shadow: 0 0 50px rgba(255, 0, 0, 0.4);
+        width: 300px;
+    }
+    #gameOverScreen h1 {
+        color: #f00; font-size: 28px; margin: 0 0 20px 0; letter-spacing: 2px;
+    }
+    .go-stat {
+        display: flex; justify-content: space-between;
+        border-bottom: 1px solid #333; padding: 8px 0;
+        font-size: 14px; color: #ccc;
+    }
+    .go-val { color: #fff; font-weight: bold; }
+    #rebootBtn {
+        background: rgba(255, 0, 0, 0.2); border: 1px solid #f00; color: #f00;
+        margin-top: 20px; font-size: 16px; padding: 15px; width: 100%; cursor: pointer;
+    }
+    #rebootBtn:hover { background: rgba(255, 0, 0, 0.4); box-shadow: 0 0 15px #f00; }
+
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="wave">WAVE <span id="wn">1</span> INCOMING</div>
+<div id="baseHit" class="base-hit"></div>
+
+<div id="gameOverScreen">
+    <h1>MISSION FAILED</h1>
+    <div class="go-stat"><span>WAVES SURVIVED</span><span class="go-val" id="goWave">0</span></div>
+    <div class="go-stat"><span>HOSTILES KILLED</span><span class="go-val" id="goKills">0</span></div>
+    <div class="go-stat"><span>BEST STREAK</span><span class="go-val" id="goStreak">0</span></div>
+    <button id="rebootBtn">REBOOT SYSTEM</button>
+</div>
+
+<div id="hud">
+    <div style="font-weight:bold; font-size: 14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
+        LATTICERUNNER 21.6
+    </div>
+    <button id="pauseBtn" style="margin-bottom: 5px; background: rgba(0,255,0,0.15);">START SYSTEM</button>
+    <div class="btn-grid">
+        <button id="resetBtn">RESET</button>
+        <button id="skipBtn">SKIP SONG</button>
+    </div>
+    <hr style="border-color:#0f0; opacity:0.2; margin: 8px 0;">
+    <button id="furyBtn" disabled style="color: #00ffff; border-color: #00ffff; background: rgba(0,255,255,0.15);">FURY AIR SUPPORT</button>
+    <div class="btn-grid">
+        <button id="empBtn" disabled>EMP BLAST</button>
+        <button id="clgBtn" disabled>CLG GRID</button>
+    </div>
+    <div class="btn-grid">
+        <button id="ttuBtn" disabled>TTU LINK</button>
+        <button id="orsBtn" disabled>ORS SCAN</button>
+    </div>
+</div>
+
+<div id="nowPlaying">
+    <div id="np-artist">Awaiting Input...</div>
+    <div id="np-track-mask">
+        <div class="song-title-container" id="np-track">System Offline</div>
+    </div>
+</div>
+
+<div id="recommendationBox">
+    <span style="font-weight:bold;color:#00ffff;">TACTICAL AI:</span><br>
+    <span id="recommendationText" style="color:#0f0;font-weight:bold; font-size:12px;">SYSTEM OFFLINE.</span>
+</div>
+
+<div id="roadrunnerStatus">
+    <span style="font-weight:bold;color:#00ffaa;margin-bottom:6px;display:block;">ROADRUNNER LOGISTICS:</span>
+</div>
+
+<div id="telemetry">
+    <span id="esysStatus">E-System: UNINITIALIZED</span><br>
+    <span id="furyStatus" style="color:#00ffff;">Air Support: UNINITIALIZED</span><br>
+    <span id="clgStatus">CLG: UNINITIALIZED</span> | <span id="ttuStatus">TTU: UNINITIALIZED</span><br>
+    <span id="orsStatus">ORS: UNINITIALIZED</span>
+</div>
+
+<div id="killfeed">Awaiting Tactical Input...<br></div>
+<audio id="bgMusic" preload="auto"></audio>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+<script>
+    mapboxgl.accessToken='pk.eyJ1IjoiY2hyaXNub3JkYWhsIiwiYSI6ImNtaXR3MXh6ZzFnaWgzZHBvOGt6Y2dhbjMifQ.H97o7anjU04vOv48DyOFNg';
+    
+    const base={lat:34.8165,lng:-118.1980};
+    const baseHitIndicator=document.getElementById('baseHit');
+    const baseThreshold=0.0018;
+    const ID_RANGE = 0.060; 
+    const STREAK_WINDOW_MS=10000;
+    
+    const EMP_COOLDOWN_MS=50000;
+    const EMP_DETONATION_RANGE=0.045; 
+    const EMP_KILL_RANGE=0.045;       
+    
+    const CLG_ACTIVATION_MS=20000;
+    const CLG_SHUTDOWN_MS=30000; 
+    const CLG_COOLDOWN_MS=60000;
+    const CLG_RANGE=0.012;       
+    const CLG_HEAT_RATE = 0.21; 
+    const CLG_COOL_RATE = 0.5; 
+    const CLG_MAX_HEAT = 100;
+    
+    const TTU_COOLDOWN_MS=70000;
+    const TTU_DURATION_MS=10000;
+    const TTU_PACKET_HIT_CHANCE=0.75;
+    
+    const ORS_COOLDOWN_MS=70000;
+    const ORS_DISRUPTION_DURATION_MS=20000;
+    
+    const FURY_COOLDOWN_MS = 60000; 
+    const FURY_SPEED = 0.0020; 
+    const MISSILE_SPEED = 0.0060;
+    const FURY_ENGAGE_RANGE = 0.25; 
+    
+    const MAX_FUEL = 100;
+    const FUEL_BURN_RATE = 0.04;
+    const REFUEL_RATE = 0.5;
+    const MAX_MISSILES = 6;
+    const RELOAD_RATE = 0.05;
+    
+    let ROADRUNNER_BASE_SPEED=0.0006;
+    const ENEMY_INCREASE_PER_WAVE=2;
+    let playing=false;
+    let friends=[],enemies=[],projectiles=[],explosions=[],nextId=1;
+    
+    let furySquad = [];
+    let furyMissiles = [];
+    
+    let waveNumber=1,totalKills=0;
+    let roadrunnerLosses=0;
+    let highestStreak=0;
+    let sessionHighStreak=0; 
+    let waveTimer=null;
+    let telemetryInterval=null;
+    let resumeInterval=null;
+    let recommendationInterval=null;
+    let isUpdating=true;
+    let isTelemetryActive=false;
+    let isRegrouping=false; 
+    let lastStreakSpokenTs=0;
+    let lastKillFeedLogTs=0;
+    let lastTelemetryLogTs=0;
+    let lastAllClearVoiceTs=0;
+    let isFirstStart=true;
+    
+    let empReady=true;
+    let empLastFiredTs=0;
+    
+    let clgStatus='READY';
+    let clgTargetTs=0;
+    let clgHeat=0;
+    
+    let ttuReady=true,ttuActive=false,ttuLastFiredTs=0;
+    let orsReady=true,orsLastFiredTs=0,orsDisruptionTs=0;
+    let furyReady = true;
+    let furyLastFiredTs = 0;
+    
+    const friendInit=[];
+    for(let i=1;i<=10;i++){
+        const id=100+i;
+        const name=`RR-${String(i).padStart(2,'0')}`;
+        const angle=(i-1)*(2*Math.PI/10);
+        const radius=0.004;
+        friendInit.push({
+            id, name,
+            lat:base.lat+Math.sin(angle)*radius,
+            lng:base.lng+Math.cos(angle)*radius,
+            speed:ROADRUNNER_BASE_SPEED,
+            bearing:0,
+            currentStreak:0, lastKillTs:0,
+            fuel: MAX_FUEL,
+            missiles: MAX_MISSILES,
+            logisticsState: 'ACTIVE'
+        })
+    }
+
+    const music=document.getElementById('bgMusic');
+    music.volume=0.3;
+    const songMetadata=[{urlKey:"01-I-ve-Waited-As-Long-As-I-Can",artist:"Tony Rice",title:"I've Waited As Long As I Can"},{urlKey:"mississippi-fred-mcdowell-steakbone-slide-guitar-03-the-train-i-ride",artist:"Mississippi Fred McDowell",title:"The Train I Ride"},{urlKey:"09-The-Girl-Can t-Help-It-Little-Richard",artist:"Little Richard",title:"The Girl Can't Help It"},{urlKey:"09.-Huey-Lewis-The-News-Workin-For-A-Livin",artist:"Huey Lewis & The News",title:"Workin' For A Livin'"},{urlKey:"14-One-Way-Out-Sonny-Boy-Williamson",artist:"Sonny Boy Williamson",title:"One Way Out"},{urlKey:"04-Too-Much-Monkey-Business-Chuck-Berry",artist:"Chuck Berry",title:"Too Much Monkey Business"},{urlKey:"12-I-Say-A-Little-Prayer",artist:"Aretha Franklin",title:"I Say A Little Prayer"},{urlKey:"13-Johnny-B.-Goode-Chuck-Berry",artist:"Chuck Berry",title:"Johnny B. Goode"},{urlKey:"21-Back-In-The-U.S.A.-Chuck-Berry",artist:"Chuck Berry",title:"Back In The U.S.A."},{urlKey:"Blues-Brothers-Made-In-America-07-Green-Onions",artist:"Blues Brothers",title:"Green Onions"},{urlKey:"0dsan6odub14pwktr818d/19.-Rainy-Night-In-Georgia",artist:"Ray Charles",title:"Rainy Night In Georgia"},{urlKey:"16.-We-Will-Rock-You",artist:"Queen",title:"We Will Rock You"},{urlKey:"13-When-The-Boys-Were-Out-On-The-Western-Plains",artist:"Lead Belly",title:"When The Boys Were Out On The Western Plains"},{urlKey:"z7h56ti9ejy7rnq0kw15f/06.-Hurricane-Betsy",artist:"Lightnin' Hopkins",title:"Hurricane Betsy"},{urlKey:"9mo0cjjtwygxeiugsjbw8/05.-Nothin-But-The-Blues",artist:"Lightnin' Hopkins",title:"Nothin' But The Blues"},{urlKey:"275xgb4cvln3lln6w6167/01-Penitentiary-Blues",artist:"Lightnin' Hopkins",title:"Penitentiary Blues"},{urlKey:"g7p8wu1dp4mpgy38hdk5q/26.-I-m-Gonna-Be-A-Wheel-Someday",artist:"Fats Domino",title:"I'm Gonna-Be-A-Wheel-Someday"},{urlKey:"g2uajf7nnmtqvn91ezcm3/08.-Poor-Me",artist:"Fats Domino",title:"Poor Me"},{urlKey:"u8lug9zb1icn3l61temhp/06.I-Need-Some-Money",artist:"John Lee Hooker",title:"I Need Some Money"},{urlKey:"j36dqmrryjr48472ddzrp/10-Up-Above-My-Head-I-Hear-Music-In-The-Air",artist:"Sister Rosetta Tharpe",title:"Up Above My Head I Hear Music In The Air"},{urlKey:"3erof4x8z418wza0j7lxq/12-Better-Not-Look-Down",artist:"B.B. King",title:"Better Not Look Down"},{urlKey:"b5bo69t35ggy02n58ukqf/07-Bird-Of-Paradise",artist:"Dizzy Gillespie",title:"Bird Of Paradise"},{urlKey:"348duugaefvfn9xmkp67s/14.-Jimmy-Reed-Baby-What-Do-You-Want-Me-To-Do",artist:"Jimmy Reed",title:"Baby What-Do-You-Want-Me-To-Do"}];
+    const masterPlaylist=["https://www.dropbox.com/scl/fi/iq0ba3vt3eeeyvp6p24cn/01-I-ve-Waited-As-Long-As-I-Can.mp3?rlkey=wk5vkrnjtlxdnrl6masjzu9w3&st=6563lacv&raw=1","https://www.dropbox.com/scl/fi/yy8ag3q2jug96ecd77mba/mississippi-fred-mcdowell-steakbone-slide-guitar-03-the-train-i-ride.mp3?rlkey=wynvr46f0nt1tjoibneajc5b4&st=p1mlsjpd&raw=1","https://www.dropbox.com/scl/fi/65zh2u6mfulola10th5q2/09-The-Girl-Can t-Help-It-Little-Richard.mp3?rlkey=edm1gou8em8b7zcfe2jxy7bc8&st=yvphp925&raw=1","https://www.dropbox.com/scl/fi/b96rj8d844dyfu34mcg2xep6/09.-Huey-Lewis-The-News-Workin-For-A-Livin.flac?rlkey=b1a5jghx8rdyfu34mcgskwc5szlzs7isb&st=goqb8d44&raw=1","https://www.dropbox.com/scl/fi/5fvt7y69vwn9f04azx88m/14-One-Way-Out-Sonny-Boy-Williamson.mp3?rlkey=rnjvo3wuozaxkvqd8zl52nzll&st=q4hto05x&raw=1","https://www.dropbox.com/scl/fi/u8lug9zb1icn3l61temhp/06.I-Need-Some-Money.mp3?rlkey=t6eq4k9dqze66q9nisc3wps38&st=glpxjguw&raw=1","https://www.dropbox.com/scl/fi/8mpi4we88rafxacqmv6d9/04-Too-Much-Monkey-Business-Chuck-Berry.mp3?rlkey=inoxzv9f0i8k28aoh0q6fwmn9&st=iggup33v&raw=1","https://www.dropbox.com/scl/fi/z7h56ti9ejy7rnq0kw15f/06.-Hurricane-Betsy.flac?rlkey=kxb07y1msn99m0pf3lpl2a5ix&st=9ton1tfe&raw=1","https://www.dropbox.com/scl/fi/b5bo69t35ggy02n58ukqf/07-Bird-Of-Paradise.flac?rlkey=yk5a56bbpfsu2n2mof8pn2dj2&st=8fhlzt68&raw=1","https://www.dropbox.com/scl/fi/j36dqmrryjr48472ddzrp/10-Up-Above-My-Head-I-Hear-Music-In-The-Air.mp3?rlkey=6nsaz0rirp1gon1gssiws3tab&st=69llu37q&raw=1","https://www.dropbox.com/scl/fi/3erof4x8z418wza0j7lxq/12-Better-Not-Look-Down.flac?rlkey=1pasavj3mcgskwc5szlzs7isb&st=zkx4gxxr&raw=1","https://www.dropbox.com/scl/fi/348duugaefvfn9xmkp67s/14.-Jimmy-Reed-Baby-What-Do-You-Want-Me-To-Do-_.mp3?rlkey=cxlupv2btao501di351eu0v4r&st=jh4ze5ma&raw=1","https://www.dropbox.com/scl/fi/1m8hvbmv96ilh9mb97bgt/12-I-Say-A-Little-Prayer.mp3?rlkey=e2nxdcax12t8uraief8zenavm&st=9ugk7yab&raw=1","https://www.dropbox.com/scl/fi/76nvj9rvyaahomges3dds/13-Johnny-B.-Goode-Chuck-Berry.mp3?rlkey=hnro6vap2qiqm6hn9jxkc178f&st=jmrd9mjs&raw=1","https://www.dropbox.com/scl/fi/w6jjve2tj1ihhpug602u/21-Back-In-The-U.S.A.-Chuck-Berry.mp3?rlkey=kbv9vbt6nczwd8cfl1np4dof2&st=kjes5f4l&raw=1","https://www.dropbox.com/scl/fi/g7p8wu1dp4mpgy38hdk5q/26.-I-m-Gonna-Be-A-Wheel-Someday.flac?rlkey=0ynj6gv2dqu4dwtngsqd3h5wb&st=90h3q6sc&raw=1","https://www.dropbox.com/scl/fi/9jj5ju3yrliqmdwdx1cky/16.-We-Will-Rock-You.mp3?rlkey=cz6f0l8pog84vr89527gn8u87&raw=1","https://www.dropbox.com/scl/fi/w0ai5u9h3dtptzjllft0v/Blues-Brothers-Made-In-America-07-Green-Onions.mp3?rlkey=cb548pd9mu6xqg0t3ag4enqfi&st=taoh0bgg&raw=1","https://www.dropbox.com/scl/fi/o2isrxylrqv9mioluptgl/13-When-The-Boys-Were-Out-On-The-Western-Plains.flac?rlkey=fhac79o0sfzdm2lknbqss94br&raw=1","https://www.dropbox.com/scl/fi/z7h56ti9ejy7rnq0kw15f/06.-Hurricane-Betsy.flac?rlkey=kxb07y1msn99m0pf3lpl2a5ix&st=9ton1tfe&raw=1","https://www.dropbox.com/scl/fi/0dsan6odub14pwktr818d/19.-Rainy-Night-In-Georgia.mp3?rlkey=ootry652qwuwmc8d08pluhyyh&raw=1","https://www.dropbox.com/scl/fi/275xgb4cvln3l6w6167/01-Penitentiary-Blues.flac?rlkey=u6wqx3fqa1z4kc44opitls814&raw=1","https://www.dropbox.com/scl/fi/9mo0cjjtwygxeiugsjbw8/05.-Nothin-But-The-Blues.flac?rlkey=urjzte2wg076p3i34zc0gqd91&raw=1","https://www.dropbox.com/scl/fi/g2uajf7nnmtqvn91ezcm3/08.-Poor-Me.flac?rlkey=ua58vdokvyqkqveo5m3e7gd5u&raw=1","https://www.dropbox.com/scl/fi/w0ai5u9h3dtptzjllft0v/Blues-Brothers-Made-In-America-07-Green-Onions.mp3?rlkey=cb548pd9mu6xqg0t3ag4enqfi&st=ppm0zjkn&raw=1"];
+    const fixedOrderUrls=["https://www.dropbox.com/scl/fi/9jj5ju3yrliqmdwdx1cky/16.-We-Will-Rock-You.mp3?rlkey=cz6f0l8pog84vr89527gn8u87&raw=1","https://www.dropbox.com/scl/fi/w0ai5u9h3dtptzjllft0v/Blues-Brothers-Made-In-America-07-Green-Onions.mp3?rlkey=cb548pd9mu6xqg0t3ag4enqfi&st=taoh0bgg&raw=1","https://www.dropbox.com/scl/fi/o2isrxylrqv9mioluptgl/13-When-The-Boys-Were-Out-On-The-Western-Plains.flac?rlkey=fhac79o0sfzdm2lknbqss94br&raw=1","https://www.dropbox.com/scl/fi/z7h56ti9ejy7rnq0kw15f/06.-Hurricane-Betsy.flac?rlkey=kxb07y1msn99m0pf3lpl2a5ix&st=9ton1tfe&raw=1"];
+    
+    let shuffledPlaylist=[];
+    let currentSongIndex=-1;
+
+    const map=new mapboxgl.Map({
+        container:'map',
+        style:'mapbox://styles/mapbox/satellite-streets-v12',
+        center:[base.lng,base.lat],
+        zoom:14,
+        pitch:45
+    });
+
+    map.on('load', () => {
+        map.addSource('clg-source', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: [base.lng, base.lat] } } });
+        map.addLayer({ id: 'clg-perimeter', type: 'circle', source: 'clg-source', paint: { 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, 11, 14, 180, 22, 46080], 'circle-color': '#ff00ff', 'circle-opacity': 0, 'circle-stroke-width': 2, 'circle-stroke-color': '#ff00ff', 'circle-stroke-opacity': 0 } });
+
+        map.addSource('friends', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'friends-layer', type: 'circle', source: 'friends', paint: { 'circle-radius': 5, 'circle-color': '#00ffaa', 'circle-stroke-width': 1, 'circle-stroke-color': '#ffffff' } });
+        map.addSource('friend-headings', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'heading-layer', type: 'line', source: 'friend-headings', paint: { 'line-color': '#00ffaa', 'line-width': 2, 'line-opacity': 0.7 } });
+        map.addLayer({
+            id: 'friends-labels', type: 'symbol', source: 'friends',
+            layout: { 'text-field': ['get', 'name'], 'text-size': 10, 'text-offset': [0, 1.2], 'text-allow-overlap': true, 'text-ignore-placement': true },
+            paint: { 'text-color': '#00ffaa', 'text-halo-color': '#000', 'text-halo-width': 1 }
+        });
+
+        map.addSource('enemies', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'enemies-layer', type: 'circle', source: 'enemies', paint: { 'circle-radius': ['case', ['get', 'isSwarmUnit'], 3, ['get', 'isLoitererUnit'], 7, 5], 'circle-color': ['case', ['==', ['get', 'identified'], true], '#ff0000', ['get', 'isLoitererUnit'], '#00ccff', '#ffff00'], 'circle-opacity': 0.9, 'circle-stroke-width': 1, 'circle-stroke-color': '#000' } });
+        map.addLayer({
+            id: 'enemies-labels', type: 'symbol', source: 'enemies',
+            layout: { 
+                'text-field': [
+                    'case',
+                    ['==', ['get', 'identified'], false], 'UNKNOWN',
+                    ['get', 'isSwarmUnit'], 'PACKET',
+                    ['get', 'isLoitererUnit'], 'LOITERER',
+                    'HOSTILE TRACK'
+                ], 
+                'text-size': 9, 'text-offset': [0, -1.2], 
+                'text-allow-overlap': true, 'text-ignore-placement': true
+            },
+            paint: { 
+                'text-color': ['case', ['==', ['get', 'identified'], true], '#ff3333', '#ffff00'],
+                'text-halo-color': '#000', 'text-halo-width': 1 
+            }
+        });
+
+        map.addSource('projectiles', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'projectiles-layer', type: 'circle', source: 'projectiles', paint: { 'circle-radius': 3, 'circle-color': ['case', ['get', 'isEMP'], '#00ffff', '#00ff00'] } });
+        map.addSource('missile-trails', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({
+            id: 'missile-trails-layer', type: 'line', source: 'missile-trails',
+            paint: { 'line-color': '#00ff00', 'line-width': 2, 'line-opacity': 0.8 }
+        });
+        map.addLayer({
+            id: 'projectiles-labels', type: 'symbol', source: 'projectiles',
+            layout: { 'text-field': ['case', ['get', 'isEMP'], 'EMP', ''], 'text-size': 9, 'text-offset': [0, 1], 'text-allow-overlap': true, 'text-ignore-placement': true },
+            paint: { 'text-color': '#00ffff', 'text-halo-color': '#000', 'text-halo-width': 1 }
+        });
+
+        map.addSource('fury-jets', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'fury-jets-layer', type: 'circle', source: 'fury-jets', paint: { 'circle-radius': 8, 'circle-color': '#00ffff', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } });
+        map.addLayer({
+            id: 'fury-jets-labels', type: 'symbol', source: 'fury-jets',
+            layout: { 'text-field': ['get', 'id'], 'text-size': 11, 'text-offset': [0, -1.5], 'text-allow-overlap': true, 'text-ignore-placement': true },
+            paint: { 'text-color': '#00ffff', 'text-halo-color': '#000', 'text-halo-width': 2 }
+        });
+        map.addSource('fury-missiles', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'fury-missiles-layer', type: 'circle', source: 'fury-missiles', paint: { 'circle-radius': 3, 'circle-color': '#ffaa00', 'circle-stroke-width': 1, 'circle-stroke-color': '#fff' } });
+        map.addLayer({
+            id: 'fury-missiles-labels', type: 'symbol', source: 'fury-missiles',
+            layout: { 'text-field': 'FOX-2', 'text-size': 8, 'text-offset': [0, 1], 'text-allow-overlap': true, 'text-ignore-placement': true },
+            paint: { 'text-color': '#ffaa00', 'text-halo-color': '#000', 'text-halo-width': 1 }
+        });
+
+        map.addSource('explosions', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'explosions-layer', type: 'circle', source: 'explosions', paint: { 'circle-radius': ['get', 'radius'], 'circle-color': ['get', 'color'], 'circle-opacity': ['get', 'opacity'] } });
+        
+        map.resize();
+    });
+
+    function spawnExplosion(lat, lng, swarm, isBigEMP=false) {
+        const n = Date.now();
+        explosions.push({
+            id: n, lng, lat,
+            startTime: n,
+            duration: isBigEMP ? 1200 : 600, // Longer for EMP
+            isSwarmUnit: swarm,
+            isBigEMP: isBigEMP // Pass flag for render logic
+        });
+    }
+
+    function getMetadata(url){const m=url.match(/\/([^/]+)\?/);if(!m)return{artist:"Unknown Artist",title:"Unknown Track"};const raw=m[1];const meta=songMetadata.find(x=>raw.includes(x.urlKey));if(meta)return meta;let t=raw.replace(/\.(mp3|flac)$/i,'').replace(/(-|\.)/g,' ').replace(/^(\d+\s*|-\s*)/,'').trim();t=t.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace('Made In America','').trim();return{artist:"Unknown Artist",title:t}}
+    function displaySongInfo(){const url=shuffledPlaylist[currentSongIndex];const{artist,title}=getMetadata(url);
+        document.getElementById('np-artist').textContent = artist + ":";
+        document.getElementById('np-track').textContent = title;
+    }
+    function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+    function startPlaylist(){let full=[...masterPlaylist];let rem=[];for(const u of full){if(!fixedOrderUrls.some(f=>u.startsWith(f.split('&st=')[0])))rem.push(u)}shuffleArray(rem);shuffledPlaylist=fixedOrderUrls.concat(rem);currentSongIndex=-1;document.getElementById('np-artist').textContent='Initializing...'}
+    function playNextSong(){if(ttuActive||!playing)return;if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();music.onerror=()=>{addKill(`<span style="color:#ff3333;font-weight:bold;">Audio #${currentSongIndex+1} failed.</span>`);playNextSong()};music.play().catch(()=>{if(playing)speak('Warning. Audio system blocked. Re-engaging audio on next wave.',1)})}music.addEventListener('ended',playNextSong);
+    
+    function speak(t,p=0){
+        if(ttuActive)return;
+        let txt=t.replace(/\bEMP\b/g,'E. M. P.').replace(/\bCLG\b/g, 'C. L. G.');
+        if('speechSynthesis' in window){
+            if(!playing&&p<2)return;
+            if(speechSynthesis.speaking){
+                if(isTelemetryActive&&p<2)return;
+                if(p>=1)speechSynthesis.cancel();else return
+            }
+            const u=new SpeechSynthesisUtterance(txt);
+            const allVoices = speechSynthesis.getVoices();
+            const preferredVoice = allVoices.find(v => v.name.includes('Google US English') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Female'));
+            if(preferredVoice) { u.voice = preferredVoice; if(preferredVoice.name.includes('Google')) u.rate = 0.9; }
+            if(p===0&&speechSynthesis.speaking)return;
+            speechSynthesis.speak(u);
+            return u
+        }
+    }
+    
+    function checkKillStreakVoice(f,prev){if(ttuActive||!playing||f.currentStreak<2||isTelemetryActive)return;let phrase='';let visual='';switch(f.currentStreak){case 2:phrase='Double Kill!';visual='DOUBLE KILL';break;case 3:phrase='Triple Kill!';visual='TRIPLE KILL';break;case 4:phrase='Overkill!';visual='OVERKILL';break;case 5:phrase='Killtacular!';visual='KILLTACULAR';break;case 6:phrase='Killtrocity!';visual='KILLTROCITY';break;case 7:phrase='Killimanjaro!';visual='KILLIMANJARO';break;case 8:phrase='Killtastrophy!';visual='KILLTASTROPHE';break;case 9:phrase='Killpahcalypse!';visual='KILLPOCALYPSE';break;case 10:case 11:phrase='Killionaire!';visual='KILLIONAIRE';break;default:return}const now=Date.now();if(f.currentStreak>prev||(f.currentStreak===prev&&now-lastStreakSpokenTs>=STREAK_WINDOW_MS)){speak(phrase,1);if(f.currentStreak>prev&&now-lastKillFeedLogTs>=2000){addKill(`<span style="color:#00ffaa;font-weight:bold;">VOCAL ALERT:</span> ${visual} <span style="color:#00ffaa;">(${f.name})</span>`);lastKillFeedLogTs=now}lastStreakSpokenTs=now}}
+    
+    function readTelemetry(){if(!playing||ttuActive)return;isTelemetryActive=true;const op=friends.filter(f=>f.id!==0).length;const alive=enemies.filter(e=>e.alive).length;const proj=projectiles.length;const ent=alive+proj;const report=`Status Report. Operational Assets. ${op}. Total Entities: ${ent}. Enemy Tracks: ${alive}. Total Kills ${totalKills}. Roadrunner Losses: ${roadrunnerLosses}. Current Max Kill Streak: ${highestStreak}.`;const u=speak(report,2);addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Telemetry Report Initiated.');if(u){u.onend=()=>{isTelemetryActive=false};u.onerror=()=>{isTelemetryActive=false}}}
+    function simulateResume(){if(!playing||ttuActive)return;addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Autoresume Cycle Initiated.');if(waveTimer)clearTimeout(waveTimer);if(telemetryInterval)clearInterval(telemetryInterval);if(resumeInterval)clearInterval(resumeInterval);music.pause();playNextSong();waveTimer=setTimeout(spawnWave,35000);telemetryInterval=setInterval(readTelemetry,120000);resumeInterval=setInterval(simulateResume,600000);isUpdating=true}
+    function addKill(m){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);const kf=document.getElementById('killfeed');kf.innerHTML=`<span style="color:#0f0">[${t}]</span> ${m}<br>`+kf.innerHTML;if(kf.scrollTop!==0)kf.scrollTop=0}
+    
+    function updateRoadrunnerStatus(){
+        let html='<span style="font-weight:bold;color:#00ffaa;margin-bottom:6px;display:block;">ROADRUNNER LOGISTICS:</span>';
+        
+        const all=friends.length===0?JSON.parse(JSON.stringify(friendInit)):[...friends];
+        const sorted=all.sort((a,b)=>{if(a.id===0&&b.id!==0)return 1;if(a.id!==0&&b.id===0)return-1;return parseInt(a.name.replace('RR-','')||0)-parseInt(b.name.replace('RR-','')||0)});
+        
+        sorted.forEach(f=>{
+            if(f.id === 0) return; 
+            let color = '#00ffaa';
+            let statusText = 'ACTIVE';
+            
+            if(f.logisticsState === 'RTB') { color = '#ffff00'; statusText = 'RTB (LOW)'; }
+            if(f.logisticsState === 'RESUPPLY') { color = '#00ffff'; statusText = 'RESUPPLY'; }
+            
+            html+=`<div class="status-row" style="color:${color};font-size:11px;">
+                <span>${f.name}</span>
+                <span>[M:${Math.floor(f.missiles)} | F:${Math.floor(f.fuel)}%] ${statusText}</span>
+            </div>`;
+        });
+        
+        const op=friends.filter(f=>f.id!==0).length;
+        html+=`<div style="border-top:1px solid #0f0;margin-top:4px;padding-top:4px;font-size:11px;">
+            <span style="color:#00ffff;">OP ASSETS: ${op}</span> | <span style="color:#f00;">LOSSES: ${roadrunnerLosses}</span>
+        </div>`;
+        
+        document.getElementById('roadrunnerStatus').innerHTML=html;
+    }
+
+    function flashBaseHit(){baseHitIndicator.style.opacity=1;setTimeout(()=>{baseHitIndicator.style.opacity=0},300)}
+    
+    // --- SHOW GAME OVER SCREEN ---
+    function showGameOver(){
+        const screen = document.getElementById('gameOverScreen');
+        screen.style.display = 'block';
+        document.getElementById('goWave').innerText = waveNumber;
+        document.getElementById('goKills').innerText = totalKills;
+        document.getElementById('goStreak').innerText = sessionHighStreak; // CORRECTED VAR
+        speak("Critical failure. System compromise imminent. Mission terminated.", 2);
+    }
+
+    function init(){
+        // SAFETY: Hide Game Over Screen on Init
+        document.getElementById('gameOverScreen').style.display = 'none';
+
+        if(waveTimer)clearTimeout(waveTimer);if(telemetryInterval)clearInterval(telemetryInterval);if(resumeInterval)clearInterval(resumeInterval);if(recommendationInterval)clearInterval(recommendationInterval);
+        friends=JSON.parse(JSON.stringify(friendInit)); 
+        enemies=[];projectiles=[];explosions=[];publicContacts=[];nextId=111;waveNumber=1;totalKills=0;roadrunnerLosses=0;
+        
+        // RESET STREAK VARS
+        highestStreak=0; // Active streak of living agents
+        sessionHighStreak=0; // The record
+        
+        lastStreakSpokenTs=0;lastKillFeedLogTs=0;lastTelemetryLogTs=0;lastAllClearVoiceTs=0;empReady=true;empLastFiredTs=0;
+        
+        clgStatus='READY'; clgTargetTs=0; clgHeat=0;
+        
+        ttuReady=true;ttuActive=false;ttuLastFiredTs=0;
+        orsReady=true;orsLastFiredTs=0;orsDisruptionTs=0;
+        
+        furyReady = true; furyLastFiredTs = 0; furySquad = []; furyMissiles = [];
+        
+        document.getElementById('np-artist').textContent='System Offline';
+        document.getElementById('np-track').textContent = 'Awaiting Input...';
+        document.getElementById('esysStatus').innerHTML='E-System: <span style="color:#666;">INACTIVE</span>';
+        document.getElementById('clgStatus').innerHTML='CLG: <span style="color:#666;">INACTIVE</span>';
+        document.getElementById('ttuStatus').innerHTML='TTU: <span style="color:#666;">INACTIVE</span>';
+        document.getElementById('orsStatus').innerHTML='ORS: <span style="color:#666;">INACTIVE</span>';
+        document.getElementById('furyStatus').innerHTML='Air Support: <span style="color:#666;">INACTIVE</span>';
+        
+        document.getElementById('recommendationText').textContent='SYSTEM OFFLINE.';
+        document.getElementById('pauseBtn').textContent='START SYSTEM';
+        document.getElementById('ttuBtn').textContent='TTU LINK';
+        document.getElementById('clgBtn').textContent='CLG GRID';
+        
+        refresh(); // Instant wipe
+    }
+
+    function spawnWave(){
+        // CRITICAL FIX: Do not spawn if game stopped/reset
+        if(!playing) return;
+
+        isRegrouping=false;
+        const baseCount=Math.floor(Math.random()*8)+7;const escalation=(waveNumber-1)*ENEMY_INCREASE_PER_WAVE;const total=baseCount+escalation;let packets=0,loiterers=0,tracks=0;for(let i=0;i<total;i++){let type='TRACK';const r=Math.random();const pProb=0.20+(waveNumber*0.02);const lProb=0.10+(waveNumber*0.015);if(waveNumber>=3&&r<pProb){type='PACKET';packets++}else if(waveNumber>=4&&r<lProb){type='LOITERER';loiterers++}else tracks++;const isP=type==='PACKET';const isL=type==='LOITERER';const speed=isP?0.0012:isL?0.0003:0.0008;
+        
+        const d=(0.040+Math.random()*0.010) * 3.0; 
+        
+        enemies.push({id:nextId++,lat:base.lat+Math.sin(Math.random()*Math.PI*2)*d,lng:base.lng+Math.cos(Math.random()*Math.PI*2)*d,speed,alive:true,identified:false,engagedBy:undefined,isEngagementCounted:false,isKillStreakProcessed:false,isSwarmUnit:isP,isLoitererUnit:isL,type})}let summary=`${total} threats`;if(packets>0)summary+=` (<span style="color:#ffcc00;">PACKETS: ${packets}</span>)`;if(loiterers>0)summary+=` (<span style="color:#00ff77;">LOITERERS: ${loiterers}</span>)`;if(tracks>0)summary+=` (<span style="color:#f00;">TRACKS: ${tracks}</span>)`;const voice=waveNumber===1?`Initial contacts registered. Proceed to identify.`:`Wave ${waveNumber} inbound. ${loiterers>0?'Long range assets detected. ':''}${total} unclassified tracks.`;addKill(`<span style="color:#f00;">WAVE ${waveNumber} INCOMING — ${summary}</span>`);if(!isTelemetryActive&&!ttuActive)speak(voice,1);document.getElementById('wn').textContent=waveNumber++;document.getElementById('wave').classList.add('active');setTimeout(()=>document.getElementById('wave').classList.remove('active'),3000);
+        
+        // SCHEDULE NEXT
+        if(waveTimer) clearTimeout(waveTimer);
+        waveTimer=setTimeout(spawnWave,35000);
+    }
+
+    function fireEMPInterdiction(){const n=Date.now();if(!playing||!empReady||isTelemetryActive)return;empReady=false;empLastFiredTs=n;document.getElementById('empBtn').disabled=true;const spd=0.0030; // Doubled speed
+    projectiles.push({lng:base.lng,lat:base.lat+EMP_DETONATION_RANGE,vx:0,vy:-spd,firerId:0,isEMP:true,detonationRange:EMP_DETONATION_RANGE,isAntiPacket:false});addKill('<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP Interdiction Launched.');speak('EMP Interdiction missile launched. Standby for area denial.',1)}
+    
+    function toggleCLG(){
+        if(!playing)return;
+        const n=Date.now();
+        if(clgStatus==='READY'){
+            if(clgHeat >= 90) {
+                speak('System too hot to engage.', 1);
+                return;
+            }
+            clgStatus='ACTIVATING';
+            clgTargetTs=n+CLG_ACTIVATION_MS;
+            document.getElementById('clgBtn').textContent='CLG ACTIVATING';
+            document.getElementById('clgBtn').disabled=true;
+            speak('Laser Grid activation sequence initiated.',1);
+            addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Activation Sequence Initiated.');
+        } else if(clgStatus==='ACTIVE'){
+            clgStatus='SHUTTING_DOWN';
+            clgTargetTs=n+CLG_SHUTDOWN_MS;
+            document.getElementById('clgBtn').textContent='CLG SHUTTING DOWN';
+            document.getElementById('clgBtn').disabled=true;
+            speak('Laser Grid deactivation initiated.',1);
+            addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Deactivation Sequence Initiated.');
+        }
+    }
+    
+    function activateTTU(){if(!playing||!ttuReady||ttuActive)return;ttuReady=false;ttuActive=true;ttuLastFiredTs=Date.now();if(waveTimer){clearTimeout(waveTimer);waveTimer=null}music.pause();speechSynthesis.cancel();let idx=0;const avail=friends.filter(f=>f.id!==0);enemies.forEach(e=>{if(e.alive&&e.engagedBy===undefined&&avail.length>0){e.engagedBy=avail[idx%avail.length].id;idx++}});document.getElementById('ttuBtn').disabled=true;document.getElementById('ttuBtn').textContent='TTU ACTIVE';speak('Telemetry uplink active. All voice communication constrained.',1);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Tactical Telemetry Uplink Active! Packet lock-on enhanced.')}
+    function activateORS(){if(!playing||!orsReady)return;orsReady=false;orsLastFiredTs=Date.now();orsDisruptionTs=Date.now();document.getElementById('orsBtn').disabled=true;const lost=friends.find(f=>f.id===0);if(lost){const orig=friendInit.find(f=>f.name===lost.name);if(orig){Object.assign(lost,JSON.parse(JSON.stringify(orig)));lost.id=orig.id;lost.currentStreak=0;lost.lastKillTs=0;speak('Asset recovery successful. Roadrunner restored to operational status.',1);addKill(`<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Asset Recovery Successful. ${lost.name} Restored.`)}else{speak('Error in asset tracking. No asset restored.',1);addKill('<span style="color:#ff3333;font-weight:bold;">ORS:</span> Recovery Failed. Asset Init Data Missing.')}}else{speak('Orbital Scan complete. No assets requiring recovery detected.',1);addKill('<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Scan Complete. No Losses Detected.')}speak('Warning. Scan detected. All enemy movement speed increased.',1)}
+    function fireProjectile(f,t){
+        if(f.missiles <= 0) return;
+        f.missiles--; 
+        t.engagedBy=f.id;
+        const pkt=t.isSwarmUnit;
+        const spd=0.0070;
+        const a=Math.atan2(t.lat-f.lat,t.lng-f.lng);
+        projectiles.push({
+            lng:f.lng, lat:f.lat,
+            vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
+            firerId:f.id, firerName:f.name,
+            isAntiPacket:pkt, isEMP:false
+        })
+    }
+
+    function launchFurySquad(){
+        const n = Date.now();
+        if(!playing || !furyReady) return;
+        furyReady = false;
+        furyLastFiredTs = n;
+        document.getElementById('furyBtn').disabled = true;
+        const offsets = [-0.008, 0.008]; 
+        offsets.forEach((offset, idx) => {
+            furySquad.push({
+                id: `FURY-${idx+1}`,
+                lat: base.lat - 0.08, 
+                lng: base.lng + offset,
+                vx: 0,
+                vy: FURY_SPEED, 
+                firedCount: 0,
+                ammo: 10 // Increased Ammo
+            });
+        });
+        speak("Air support inbound. Fury squadron engaging.", 1);
+        addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Fury Squadron Deployed.');
+    }
+
+    // --- UPDATED AI RECOMMENDATION LOGIC ---
+    function recommendSystem(){
+        if(!playing){
+            document.getElementById('recommendationText').textContent='SYSTEM OFFLINE.';
+            return;
+        }
+        
+        const imminent=enemies.filter(e=>e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<0.02);
+        const close=enemies.filter(e=>e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<EMP_KILL_RANGE);
+        const unengaged=imminent.filter(e=>e.engagedBy===undefined);
+        const packets=imminent.filter(e=>e.isSwarmUnit);
+        const tracks=imminent.filter(e=>!e.isSwarmUnit&&!e.isLoitererUnit);
+        const loiterers=imminent.filter(e=>e.isLoitererUnit);
+        
+        let idx=0;
+        imminent.forEach(e=>{idx+=e.isSwarmUnit?1.5:e.isLoitererUnit?2.0:1}); // Loiterers weight more
+        
+        let best='NO IMMEDIATE THREATS DETECTED.';
+        let max=50;
+        
+        // 1. EMP CHECK
+        if(empReady&&!ttuActive){
+            let s=idx*5;
+            if(close.length>=3) s+=50;
+            if(s>max){
+                max=s;
+                best='<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP (High threat density).';
+            }
+        }
+        
+        // 2. TTU CHECK
+        if(ttuReady&&!ttuActive){
+            let s=packets.length*10+unengaged.length*5;
+            if(s>max){
+                max=s;
+                best='<span style="color:#00ffff;font-weight:bold;">TTU LINK:</span> Recommended (Packets/Unengaged).';
+            }
+        }
+        
+        // 3. CLG CHECK
+        if(clgStatus==='READY'){
+            let s=tracks.length*10-packets.length*15;
+            if(s>max&&s>50){
+                max=s;
+                best='<span style="color:#ff00ff;font-weight:bold;">CLG GRID:</span> Recommended (Tracks closing).';
+            }
+        }
+        
+        // 4. ORS CHECK
+        if(orsReady){
+            const lost=friends.filter(f=>f.id===0).length;
+            if(lost>0&&idx<5){
+                let s=lost*50;
+                if(s>max){
+                    max=s;
+                    best='<span style="color:#00ffaa;font-weight:bold;">ORS SCAN:</span> Recommended (Recovery needed).';
+                }
+            }
+        }
+        
+        // 5. FURY CHECK (New Logic)
+        if(furyReady){
+            let s = 0;
+            if(loiterers.length > 0) s += 40; // Bonus for Loiterers (hard targets)
+            if(imminent.length >= 8) s += 30; // Bonus for mass waves
+            
+            // Add base threat score
+            s += idx * 4;
+            
+            if(s > max) {
+                max = s;
+                // Custom message based on why we triggered
+                if(loiterers.length > 0) 
+                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Heavy Armor Detected).';
+                else
+                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Saturation Level High).';
+            }
+        }
+        
+        if(max<=50) best='NO IMMEDIATE ACTION REQUIRED.';
+        document.getElementById('recommendationText').innerHTML=best;
+    }
+    
+    function update(){if(!playing)return;const now=Date.now();
+    
+    if(isRegrouping){
+        let allHome = true;
+        friends.forEach(f => {
+            if(f.id !== 0){
+                const orig = friendInit.find(init => init.id === f.id);
+                f.fuel = Math.min(f.fuel + 1, MAX_FUEL);
+                f.missiles = Math.min(f.missiles + 0.1, MAX_MISSILES);
+                const dist = Math.hypot(orig.lng - f.lng, orig.lat - f.lat);
+                if(dist > 0.0001){
+                    allHome = false;
+                    const a = Math.atan2(orig.lat - f.lat, orig.lng - f.lng);
+                    f.lng += Math.cos(a) * (f.speed * 1.5);
+                    f.lat += Math.sin(a) * (f.speed * 1.5);
+                    f.bearing = (a * 180 / Math.PI) - 90; 
+                } else {
+                    f.lng = orig.lng; f.lat = orig.lat;
+                }
+            }
+        });
+        if(allHome) isRegrouping = false;
+    }
+
+    // --- UPDATED CLG STATUS LOGIC ---
+    if(clgStatus==='ACTIVATING'&&now>=clgTargetTs){
+        clgStatus='ACTIVE';
+        document.getElementById('clgBtn').textContent='CLG ACTIVE';
+        document.getElementById('clgBtn').disabled=false; // Allow shutdown
+        speak('Laser Grid fully operational.',1);
+        if(map.getLayer('clg-perimeter')) {
+            map.setPaintProperty('clg-perimeter','circle-opacity',0.4);
+            map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.8);
+        }
+        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Operational. Mobility degraded.');
+    } else if(clgStatus==='SHUTTING_DOWN'&&now>=clgTargetTs){
+        clgStatus='COOLDOWN'; // New state
+        clgTargetTs = now + CLG_COOLDOWN_MS;
+        document.getElementById('clgBtn').disabled=true;
+        speak('Laser Grid offline. System cooling down.',1);
+        if(map.getLayer('clg-perimeter')) {
+            map.setPaintProperty('clg-perimeter','circle-opacity',0.0);
+            map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0);
+        }
+        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Cooldown Initiated.');
+    } else if(clgStatus==='COOLDOWN'&&now>=clgTargetTs){
+        clgStatus='READY';
+        document.getElementById('clgBtn').textContent='CLG GRID';
+        document.getElementById('clgBtn').disabled=false;
+        speak('Laser Grid systems recharged and ready.',1);
+        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Systems Recharged.');
+    } else if(clgStatus === 'OVERHEAT' && clgHeat <= 0){
+        // Recovered from overheat
+        clgStatus = 'READY';
+        document.getElementById('clgBtn').textContent='CLG GRID';
+        document.getElementById('clgBtn').disabled=false;
+        speak('Laser Grid temperature nominal. Systems rebooted.', 1);
+        addKill('<span style="color:#00ffaa;font-weight:bold;">CLG:</span> Overheat Cycle Complete. Ready.');
+    }
+
+    // --- CLG HEAT LOGIC ---
+    if(clgStatus === 'ACTIVE'){
+        clgHeat += CLG_HEAT_RATE;
+        if(clgHeat >= CLG_MAX_HEAT){
+            clgHeat = CLG_MAX_HEAT;
+            clgStatus = 'OVERHEAT';
+            document.getElementById('clgBtn').disabled = true;
+            speak('Warning. Laser Grid overheat. Emergency shutdown initiated.', 1);
+            addKill('<span style="color:#ff0000;font-weight:bold;">CLG:</span> CRITICAL OVERHEAT! SHUTTING DOWN.');
+            if(map.getLayer('clg-perimeter')) {
+                map.setPaintProperty('clg-perimeter','circle-opacity',0.0);
+                map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0);
+            }
+        }
+    } else {
+        clgHeat = Math.max(0, clgHeat - CLG_COOL_RATE);
+    }
+
+    if(!empReady&&now-empLastFiredTs>=EMP_COOLDOWN_MS){empReady=true;speak('EMP Interdiction system fully charged and ready.',1);addKill('<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> Charging Complete. Ready to Fire.')}if(ttuActive&&now-ttuLastFiredTs>=TTU_DURATION_MS){ttuActive=false;playNextSong();if(enemies.filter(e=>e.alive).length===0){if(waveTimer)clearTimeout(waveTimer);waveTimer=setTimeout(spawnWave,10000);speak('Telemetry uplink complete. Resuming wave rotation.',1);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Uplink Complete. Resuming Wave Rotation.')}else{speak('Telemetry uplink complete. Systems normalized.',1);if(!waveTimer)waveTimer=setTimeout(spawnWave,35000);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Uplink Complete. System normalizing.')}document.getElementById('ttuBtn').textContent='TTU LINK'}if(!ttuReady&&now-ttuLastFiredTs>=TTU_COOLDOWN_MS){ttuReady=true;speak('Telemetry Uplink ready.',1)}if(!orsReady&&now-orsLastFiredTs>=ORS_COOLDOWN_MS){orsReady=true;speak('Orbital Reconnaissance Scan ready.',1)}let enemySpeedMul=1;let orsRemain=0;if(now-orsDisruptionTs<ORS_DISRUPTION_DURATION_MS){enemySpeedMul=1.5;orsRemain=Math.ceil((ORS_DISRUPTION_DURATION_MS-(now-orsDisruptionTs))/1000)}const empBtn=document.getElementById('empBtn');if(!empReady){const s=Math.ceil((EMP_COOLDOWN_MS-(now-empLastFiredTs))/1000);document.getElementById('esysStatus').innerHTML=`E-System: <span style="color:#ffcc00;">CHARGING (${s}s)</span>`;empBtn.disabled=true}else{document.getElementById('esysStatus').innerHTML=`E-System: <span style="color:#00ffaa;font-weight:bold;">READY</span>`;empBtn.disabled=!playing}
+    
+    // CLG BUTTON UPDATE
+    const clgBtn=document.getElementById('clgBtn');
+    if(clgStatus === 'OVERHEAT'){
+        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff0000;font-weight:bold;">OVERHEAT (${Math.floor(clgHeat)}%)</span>`;
+        clgBtn.textContent = `COOLING ${Math.floor(clgHeat)}%`;
+        clgBtn.disabled = true;
+    } else if(clgStatus==='ACTIVATING'||clgStatus==='SHUTTING_DOWN'){
+        const s=Math.ceil((clgTargetTs-now)/1000);
+        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff00ff;font-weight:bold;">${clgStatus} (${s}s)</span>`;
+        clgBtn.disabled=true;
+    } else if(clgStatus==='COOLDOWN'){
+        const s=Math.ceil((clgTargetTs-now)/1000);
+        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`;
+        clgBtn.textContent = `CLG (${s}s)`;
+        clgBtn.disabled=true;
+    } else if(clgStatus==='ACTIVE'){
+        // SHOW HEAT LEVEL
+        let color = clgHeat > 70 ? '#ff0000' : '#ff00ff';
+        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:${color};font-weight:bold;">ACTIVE (${Math.floor(clgHeat)}%)</span>`;
+        clgBtn.textContent=`DEACTIVATE (${Math.floor(clgHeat)}%)`;
+        clgBtn.disabled=!playing;
+        clgBtn.style.color = color;
+        clgBtn.style.borderColor = color;
+    } else{
+        // READY state (show remaining heat if any)
+        if(clgHeat > 0){
+             document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffff00;">COOLING (${Math.floor(clgHeat)}%)</span>`;
+             clgBtn.textContent=`CLG (${Math.floor(clgHeat)}%)`;
+        } else {
+             document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#00ffaa;">READY</span>`;
+             clgBtn.textContent='CLG GRID';
+        }
+        clgBtn.disabled=!playing;
+        clgBtn.style.color = '#0f0';
+        clgBtn.style.borderColor = '#0f0';
+    }
+
+    const ttuBtn=document.getElementById('ttuBtn');if(ttuActive){const s=Math.ceil((TTU_DURATION_MS-(now-ttuLastFiredTs))/1000);document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#00ffff;font-weight:bold;">UPLINK ACTIVE (${s}s)</span>`;ttuBtn.disabled=true}else if(!ttuReady){const s=Math.ceil((TTU_COOLDOWN_MS-(now-ttuLastFiredTs))/1000);document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`;ttuBtn.disabled=true}else{document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#00ffaa;font-weight:bold;">READY</span>`;ttuBtn.textContent='TTU LINK';ttuBtn.disabled=!playing}if(orsRemain>0){document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#ffcc00;font-weight:bold;">DISRUPTION (${orsRemain}s)</span>`}else if(!orsReady){const s=Math.ceil((ORS_COOLDOWN_MS-(now-orsLastFiredTs))/1000);document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`}else{document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#00ffaa;font-weight:bold;">READY</span>`}document.getElementById('orsBtn').disabled=!playing||orsRemain>0||!orsReady;updateRoadrunnerStatus();let effSpeed=ROADRUNNER_BASE_SPEED;if(clgStatus==='ACTIVE')effSpeed*=0.5;
+    
+    // FURY BUTTON WITH FAILSAFE
+    const furyBtn = document.getElementById('furyBtn');
+    if(!furyReady){
+        let s = Math.ceil((FURY_COOLDOWN_MS - (now - furyLastFiredTs))/1000);
+        
+        // FAILSAFE: If timer is negative or 0, force ready immediately
+        if (s <= 0) {
+            furyReady = true;
+            // Force reset immediately visually
+            document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;
+            furyBtn.textContent = "FURY AIR SUPPORT";
+            furyBtn.disabled = !playing;
+            speak('Air support refueling complete. Fury squadron on standby.', 1);
+            addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Refueled and Ready.');
+        } else {
+            // Normal cooldown display
+            document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#ffcc00;">REFUELING (${s}s)</span>`;
+            furyBtn.textContent = `FURY (${s}s)`;
+            furyBtn.disabled = true;
+        }
+    } else {
+        document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;
+        furyBtn.textContent = "FURY AIR SUPPORT";
+        furyBtn.disabled = !playing;
+    }
+
+    // --- DATA LINK: Global Threat ID ---
+    if(furySquad.length > 0) {
+        enemies.forEach(e => {
+            if(!e.identified) e.identified = true; 
+        });
+    }
+
+    // --- PANIC LAUNCH LOGIC ---
+    // Count active defenders (not dead, not RTB/RESUPPLY)
+    const activeDefenders = friends.filter(f => f.id !== 0 && f.logisticsState === 'ACTIVE').length;
+    const enemyCount = enemies.filter(e => e.alive).length;
+
+    if (activeDefenders === 0 && enemyCount > 0) {
+        // Find defenders who are currently resupplying but have enough resources to fight
+        const readyToScramble = friends.filter(f => 
+            f.id !== 0 && 
+            f.logisticsState === 'RESUPPLY' && 
+            f.fuel > 10 && // At least 10% fuel
+            f.missiles >= 1 // At least 1 missile
+        );
+
+        if (readyToScramble.length > 0) {
+            readyToScramble.forEach(f => {
+                f.logisticsState = 'ACTIVE';
+            });
+            speak('Emergency scramble initiated. Launching available assets.', 1);
+            addKill('<span style="color:#ff00ff;font-weight:bold;">ALERT:</span> PANIC LAUNCH! Assets Scrambled Early.');
+        }
+    }
+
+    friends.filter(f=>f.id!==0).forEach(f=>{
+        
+        if(f.logisticsState === 'ACTIVE') {
+            f.fuel -= FUEL_BURN_RATE;
+            if(f.fuel <= 0 || f.missiles <= 0) {
+                f.logisticsState = 'RTB';
+                enemies.forEach(e => { if(e.engagedBy === f.id) e.engagedBy = undefined; });
+            }
+        } else if(f.logisticsState === 'RESUPPLY') {
+            f.fuel = Math.min(f.fuel + REFUEL_RATE, MAX_FUEL);
+            f.missiles = Math.min(f.missiles + RELOAD_RATE, MAX_MISSILES);
+            if(f.fuel >= MAX_FUEL && f.missiles >= MAX_MISSILES) {
+                f.logisticsState = 'ACTIVE';
+            }
+        }
+
+        let closest=Infinity;
+        let target=null;
+
+        if(f.logisticsState === 'RTB') {
+            const distToBase = Math.hypot(base.lng - f.lng, base.lat - f.lat);
+            if(distToBase < 0.0005) {
+                f.logisticsState = 'RESUPPLY';
+            } else {
+                const a = Math.atan2(base.lat - f.lat, base.lng - f.lng);
+                f.lng += Math.cos(a) * (f.speed * 1.5); 
+                f.lat += Math.sin(a) * (f.speed * 1.5);
+                f.bearing = (a * 180 / Math.PI) - 90; 
+            }
+        } 
+        else if(f.logisticsState === 'RESUPPLY') {
+        }
+        else {
+            enemies.forEach(e=>{
+                if(e.alive){
+                    const d=Math.hypot(e.lng-f.lng,e.lat-f.lat);
+                    if(!e.identified && d < ID_RANGE){e.identified = true;}
+                    if(e.engagedBy===undefined||(ttuActive&&e.engagedBy!==f.id)){
+                        if(e.identified || d < 0.003){ 
+                            const ed=e.isSwarmUnit?d*0.5:e.isLoitererUnit?d*1.5:d;
+                            if(ed<closest){closest=ed;target=e}
+                        }
+                    }
+                }
+            });
+
+            if(target){
+                if(ttuActive&&target.engagedBy===undefined)target.engagedBy=f.id;
+                const a=Math.atan2(target.lat-f.lat,target.lng-f.lng);
+                f.lng+=Math.cos(a)*effSpeed;
+                f.lat+=Math.sin(a)*effSpeed;
+                f.bearing = (a * 180 / Math.PI) - 90; 
+                const chance=ttuActive?0.12:0.08;
+                if(Math.random()<chance)fireProjectile(f,target)
+            } else if(!isRegrouping) {
+                f.bearing += 2; 
+            }
+        }
+    });
+
+    furySquad.forEach(jet => {
+        jet.lat += jet.vy;
+        jet.lng += jet.vx;
+        
+        // RIPPLE FIRE LOGIC: Only fire if target isn't already claimed by another Fury missile
+        if(Math.random() < 0.50 && jet.ammo > 0){
+            // Filter targets: Alive, In Range, NOT already targeted by a missile
+            const targets = enemies.filter(e => 
+                e.alive && 
+                Math.hypot(e.lng-jet.lng, e.lat-jet.lat) < FURY_ENGAGE_RANGE &&
+                !furyMissiles.some(m => m.targetId === e.id)
+            ); 
+            
+            if(targets.length > 0){
+                // Sort by closeness
+                const t = targets.sort((a,b) => Math.hypot(a.lng-jet.lng, a.lat-jet.lat) - Math.hypot(b.lng-jet.lng, b.lat-jet.lat))[0];
+                if(t){ 
+                    jet.ammo--; 
+                    furyMissiles.push({
+                        lat: jet.lat, lng: jet.lng,
+                        targetId: t.id,
+                        speed: MISSILE_SPEED
+                    });
+                    if(Math.random() < 0.3) speak("Fox Two", 1);
+                }
+            }
+        }
+    });
+    // Despawn further North
+    furySquad = furySquad.filter(j => j.lat < base.lat + 0.08);
+
+    furyMissiles = furyMissiles.filter(m => {
+        const t = enemies.find(e => e.id === m.targetId);
+        if(!t || !t.alive){
+            m.lat += 0.005; 
+            return false; 
+        }
+        const angle = Math.atan2(t.lat - m.lat, t.lng - m.lng);
+        m.lng += Math.cos(angle) * m.speed;
+        m.lat += Math.sin(angle) * m.speed;
+        if(Math.hypot(t.lng - m.lng, t.lat - m.lat) < 0.001){
+            t.alive = false;
+            totalKills++;
+            spawnExplosion(t.lat, t.lng, t.isSwarmUnit);
+            addKill(`<span style="color:#00ffff;">FURY SQUAD:</span> Target Eliminated (Sidewinder).`);
+            return false; 
+        }
+        return true;
+    });
+
+    if(clgStatus==='ACTIVE'){enemies.filter(e=>e.alive).forEach(e=>{const d=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(d<CLG_RANGE&&!e.isSwarmUnit){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Laser perimeter breached and sanitized.',1);addKill(`<span style="color:#ff00ff;">CLG PURGE:</span> ${e.type} eliminated (Laser Defense).`)}})}const pktChance=ttuActive?TTU_PACKET_HIT_CHANCE:0.35;projectiles=projectiles.filter(p=>{p.lng+=p.vx;p.lat+=p.vy;let hit=false;if(p.isEMP){const d=Math.hypot(p.lng-base.lng,p.lat-base.lat);if(d<p.detonationRange){hit=true;enemies.forEach(e=>{const ed=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(e.alive&&ed<EMP_KILL_RANGE){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit, true);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Area denial successful. Scanning for residual threats.',1);addKill(`<span style="color:#00ffff;">EMP SPLASH:</span> ${e.type} eliminated (Area Denial).`)}});return false}}else{enemies.forEach(e=>{if(e.alive&&Math.hypot(e.lng-p.lng,e.lat-p.lat)<0.0035){const isPkt=e.isSwarmUnit;if(!isPkt||Math.random()<pktChance){e.alive=false;e.engagedBy=undefined;hit=true;totalKills++;const f=friends.find(x=>x.id===p.firerId);if(f){const msg=isPkt?`SPLASH — PACKET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`:`SPLASH — TARGET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`;if(!e.isKillStreakProcessed){const now=Date.now();const prev=f.currentStreak;if(now-f.lastKillTs<STREAK_WINDOW_MS)f.currentStreak++;else f.currentStreak=1;f.lastKillTs=now;highestStreak=friends.reduce((m,x)=>Math.max(m,x.currentStreak),0);spawnExplosion(e.lat,e.lng,isPkt);const suffix=f.currentStreak>1?` (Streak: ${f.currentStreak})`:'';addKill(msg+suffix);
+        // FIX: Update HIGH SCORE here immediately
+        if(f.currentStreak > sessionHighStreak) sessionHighStreak = f.currentStreak;
+        
+        setTimeout(()=>{if(!isTelemetryActive&&!ttuActive)speak('Splash one',1);setTimeout(()=>checkKillStreakVoice(f,prev),2200)},1500);e.isKillStreakProcessed=true}}else addKill('SPLASH — TARGET DESTROYED (UNKNOWN ASSET)')}}})}return!hit});
+    
+    // --- FIX FOR MISSILES NEVER GOING AWAY (Range Cleanup) ---
+    projectiles = projectiles.filter(p => {
+        // Remove if too far
+        if(Math.hypot(p.lng - base.lng, p.lat - base.lat) > 0.05) return false;
+        return true;
+    });
+
+    const nowE=Date.now();explosions=explosions.filter(e=>{const t=(nowE-e.startTime)/e.duration;if(t>=1)return false;const r=e.isBigEMP ? 100 : (e.isSwarmUnit?25:40*(1-(1-t)**4));e.radius=r;e.opacity=1-t;e.color=e.isBigEMP?'#00ffff':(e.isSwarmUnit?'#ffff00':'#ff9900');return true});enemies.forEach(e=>{if(e.alive){const a=Math.atan2(base.lat-e.lat,base.lng-e.lng);e.lng+=Math.cos(a)*e.speed*enemySpeedMul;e.lat+=Math.sin(a)*e.speed*enemySpeedMul}});enemies=enemies.filter(e=>{if(e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<baseThreshold){e.alive=false;e.isKillStreakProcessed=false;flashBaseHit();if(!isTelemetryActive&&!ttuActive)speak('Breach! Loss of asset',1);friends.forEach(f=>{f.currentStreak=0;f.lastKillTs=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);lastStreakSpokenTs=0;lastKillFeedLogTs=0;const msg=e.isSwarmUnit?'<span style="color:#f00;font-weight:bold;">PACKET BREACH!</span> - Critical Infrastructure Hit!':e.isLoitererUnit?'<span style="color:#f00;font-weight:bold;">LOITERER BREACH!</span> - Critical Infrastructure Hit!':'<span style="color:#f00;font-weight:bold;">BASE BREACH!</span> - Roadrunner Lost!';if(!e.isSwarmUnit&&!e.isLoitererUnit){const avail=friends.filter(f=>f.id!==0);if(avail.length>0){const v=avail[Math.floor(Math.random()*avail.length)];v.id=0;addKill(`${msg} (${v.name} Destroyed)`)}else addKill(msg);roadrunnerLosses++}else addKill(msg);return false}return e.alive});const op=friends.filter(f=>f.id!==0).length;const alive=enemies.filter(e=>e.alive).length;
+    
+    // --- GAME OVER LOGIC CALL ---
+    if(op===0 && playing){
+        if(waveTimer)clearTimeout(waveTimer);
+        if(telemetryInterval)clearInterval(telemetryInterval);
+        if(resumeInterval)clearInterval(resumeInterval);
+        if(recommendationInterval)clearInterval(recommendationInterval);
+        playing=false;
+        isUpdating=false;
+        showGameOver(); // CALL THE NEW MODAL
+    } else if(alive===0&&playing){
+        if(waveNumber>1){
+            if(!isTelemetryActive&&!ttuActive&&(now-lastAllClearVoiceTs)>30000){
+                speak('All threats eliminated. Assets regrouping for resupply.',1);
+                lastAllClearVoiceTs=now
+            }
+            if(!waveTimer){
+                isRegrouping = true;
+                waveTimer=setTimeout(spawnWave,35000);
+                addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Mission Loiter Initiated. Assets Regrouping.')
+            }
+        }
+    };refresh()}
+    
+    function refresh(){
+        if(!map.getSource('friends')) return;
+        
+        map.getSource('friends')?.setData({type:'FeatureCollection',features:friends.filter(f=>f.id!==0).map(f=>({type:'Feature',geometry:{type:'Point',coordinates:[f.lng,f.lat]},properties:{name:f.name}}))});
+        
+        const headingFeatures = friends.filter(f=>f.id!==0).map(f => {
+            const len = 0.0005; // Length of heading indicator
+            const rad = (f.bearing + 90) * (Math.PI / 180);
+            return { type: 'Feature', geometry: { type: 'LineString', coordinates: [ [f.lng, f.lat], [f.lng + Math.cos(rad)*len, f.lat + Math.sin(rad)*len] ] } };
+        });
+        if(!map.getSource('friend-headings')){ map.addSource('friend-headings', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } }); map.addLayer({ id: 'heading-layer', type: 'line', source: 'friend-headings', paint: { 'line-color': '#00ffaa', 'line-width': 2, 'line-opacity': 0.7 } }); }
+        map.getSource('friend-headings')?.setData({type: 'FeatureCollection', features: headingFeatures});
+
+        map.getSource('enemies')?.setData({type:'FeatureCollection',features:enemies.filter(e=>e.alive).map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[e.lng,e.lat]},properties:{alive:e.alive,isSwarmUnit:e.isSwarmUnit,isLoitererUnit:e.isLoitererUnit, identified: e.identified}}))});
+        
+        map.getSource('projectiles')?.setData({type:'FeatureCollection',features:projectiles.map(p=>({type:'Feature',geometry:{type:'Point',coordinates:[p.lng,p.lat]},properties:{isAntiPacket:p.isAntiPacket,isEMP:p.isEMP}}))});
+        
+        // --- DRAW TRACER TAILS ---
+        const missileTrails = projectiles.filter(p => !p.isEMP).map(p => {
+            // REDUCED TAIL LENGTH TO 1 (Was 3)
+            const tailLen = 1;
+            const tailLng = p.lng - (p.vx * tailLen);
+            const tailLat = p.lat - (p.vy * tailLen);
+            return {
+                type: 'Feature', geometry: { type: 'LineString', coordinates: [[tailLng, tailLat], [p.lng, p.lat]] }
+            };
+        });
+        map.getSource('missile-trails')?.setData({type:'FeatureCollection',features:missileTrails});
+
+
+        map.getSource('fury-jets')?.setData({type:'FeatureCollection',features:furySquad.map(j=>({type:'Feature',geometry:{type:'Point',coordinates:[j.lng,j.lat]},properties:{id:j.id}}))});
+        map.getSource('fury-missiles')?.setData({type:'FeatureCollection',features:furyMissiles.map(m=>({type:'Feature',geometry:{type:'Point',coordinates:[m.lng,m.lat]}}))});
+        map.getSource('explosions')?.setData({type:'FeatureCollection',features:explosions.map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[e.lng,e.lat]},properties:{radius:e.radius,color:e.color,opacity:e.opacity}}))})
+    }
+    
+    function initializeAudioAndGame(){isFirstStart=false;playing=true;const intro="Starfighter, you have been recruited by the Star League to defend the frontier against Zur and the Codann armada. Victory or death. Good luck Starfighter.";speechSynthesis.speak(new SpeechSynthesisUtterance(intro));if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();music.play().catch(()=>{addKill('<span style="color:#ffcc00;font-weight:bold;">WARNING:</span> Browser blocked audio. Click SKIP to retry music playback.')});document.getElementById('pauseBtn').textContent='PAUSE';isUpdating=true;setTimeout(()=>{spawnWave();telemetryInterval=setInterval(readTelemetry,120000);resumeInterval=setInterval(simulateResume,600000);recommendationInterval=setInterval(recommendSystem,1000);addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Tactical Command Node Engaged. Assets Deployed. Wave 1 Initiated.')},15000)}
+    
+    // --- FIXED PAUSE/RESUME HANDLER ---
+    function handlePauseResume(){
+        const btn=document.getElementById('pauseBtn');
+        const gameOver=friends.filter(f=>f.id!==0).length===0&&roadrunnerLosses>0;
+        
+        if(gameOver){
+            playing=false;
+            btn.textContent='START SYSTEM';
+            music.pause();
+            init();
+            return;
+        }
+        
+        if(isFirstStart){
+            initializeAudioAndGame();
+            return;
+        }
+        
+        playing=!playing;
+        
+        if(playing){
+            // RESUME LOGIC
+            btn.textContent='PAUSE';
+            speechSynthesis.cancel();
+            isUpdating=true;
+            
+            // FIX: Check if null before restarting
+            if(!telemetryInterval) telemetryInterval=setInterval(readTelemetry,120000);
+            if(!resumeInterval) resumeInterval=setInterval(simulateResume,600000);
+            if(!recommendationInterval) recommendationInterval=setInterval(recommendSystem,1000);
+            
+            if(!waveTimer){
+                const delay = (waveNumber === 1 && enemies.length === 0) ? 3000 : 35000;
+                waveTimer=setTimeout(spawnWave, delay);
+            }
+            music.play().catch(()=>{});
+            addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Resumed.');
+        } else {
+            // PAUSE LOGIC
+            btn.textContent='RESUME';
+            music.pause();
+            isUpdating=false;
+            speechSynthesis.cancel();
+            
+            if(waveTimer) clearTimeout(waveTimer);
+            
+            // CRITICAL FIX: Clear AND set to null
+            if(telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
+            if(resumeInterval) { clearInterval(resumeInterval); resumeInterval = null; }
+            if(recommendationInterval) { clearInterval(recommendationInterval); recommendationInterval = null; }
+            
+            document.getElementById('recommendationText').textContent='SYSTEM PAUSED.';
+            addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> Tactical Pause Initiated.');
+        }
+    }
+    
+    // SAFETY: Use existing Reset logic for reboot
+    document.getElementById('rebootBtn').onclick = () => {
+        document.getElementById('resetBtn').click();
+    };
+
+    document.getElementById('pauseBtn').addEventListener('click',handlePauseResume);
+    document.getElementById('resetBtn').onclick=()=>{
+        playing=false;
+        document.getElementById('pauseBtn').textContent='START SYSTEM';
+        music.pause();
+        music.currentTime = 0;
+        speechSynthesis.cancel();
+        document.getElementById('gameOverScreen').style.display = 'none';
+        init();
+        refresh(); // Instant wipe
+        addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> RESET COMPLETE. Awaiting Start.');
+    };
+    document.getElementById('skipBtn').onclick=()=>{if(playing&&!ttuActive){music.pause();playNextSong()}else if(!playing){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Cannot skip. System is PAUSED.</span><br>`)}else if(ttuActive){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Music silenced during TTU Uplink.</span><br>`)}};document.getElementById('empBtn').onclick=fireEMPInterdiction;document.getElementById('clgBtn').onclick=toggleCLG;document.getElementById('ttuBtn').onclick=activateTTU;document.getElementById('orsBtn').onclick=activateORS;
+    document.getElementById('furyBtn').onclick = launchFurySquad;
+
+    init();
+    setInterval(update,250);
+    document.getElementById('killfeed').innerHTML='Awaiting Tactical Input. Please press START SYSTEM.<span class="dot dot1">.</span><span class="dot dot2">.</span><span class="dot dot3">.</span><br>';
+</script>
+</body>
+</html>
