@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>LATTICERUNNER // 21.8 — SPECTRUM DENIAL</title>
+<title>LATTICERUNNER // 21.9 — PHYSICS UPDATE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
 <style>
@@ -183,7 +183,7 @@
 
 <div id="hud">
     <div style="font-weight:bold; font-size: 14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
-        LATTICERUNNER 21.8
+        LATTICERUNNER 21.9
     </div>
     <button id="pauseBtn" style="margin-bottom: 5px; background: rgba(0,255,0,0.15);">START SYSTEM</button>
     <div class="btn-grid">
@@ -346,6 +346,18 @@
     });
 
     map.on('load', () => {
+        // --- ADDED BASE ICON ---
+        map.addSource('base-icon', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: [base.lng, base.lat] } } });
+        map.addLayer({
+            id: 'base-icon-layer', type: 'circle', source: 'base-icon',
+            paint: { 'circle-radius': 8, 'circle-color': '#0066ff', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' }
+        });
+        map.addLayer({
+            id: 'base-text-layer', type: 'symbol', source: 'base-icon',
+            layout: { 'text-field': 'H', 'text-size': 10, 'text-allow-overlap': true },
+            paint: { 'text-color': '#ffffff' }
+        });
+
         map.addSource('clg-source', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: [base.lng, base.lat] } } });
         map.addLayer({ id: 'clg-perimeter', type: 'circle', source: 'clg-source', paint: { 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 10, 11, 14, 180, 22, 46080], 'circle-color': '#ff00ff', 'circle-opacity': 0, 'circle-stroke-width': 2, 'circle-stroke-color': '#ff00ff', 'circle-stroke-opacity': 0 } });
 
@@ -957,8 +969,8 @@
                 f.logisticsState = 'RESUPPLY';
             } else {
                 const a = Math.atan2(base.lat - f.lat, base.lng - f.lng);
-                f.lng += Math.cos(a) * (f.speed * 1.5); 
-                f.lat += Math.sin(a) * (f.speed * 1.5);
+                f.lng += Math.cos(a) * (f.speed * 3.0);  // RTB SPEED BOOST (3x)
+                f.lat += Math.sin(a) * (f.speed * 3.0);
                 f.bearing = (a * 180 / Math.PI) - 90; 
             }
         } 
@@ -1029,16 +1041,23 @@
             m.lat += 0.005; 
             return false; 
         }
+        
+        const distToTarget = Math.hypot(t.lng - m.lng, t.lat - m.lat);
+        
+        // --- FURY SNAP LOGIC FIX (No Circling) ---
+        // If within 1.5x speed frame, just snap to it and kill
+        if(distToTarget < m.speed * 1.5) {
+             t.alive = false;
+             totalKills++;
+             spawnExplosion(t.lat, t.lng, t.isSwarmUnit);
+             addKill(`<span style="color:#00ffff;">FURY SQUAD:</span> Target Eliminated (Sidewinder).`);
+             return false;
+        }
+
         const angle = Math.atan2(t.lat - m.lat, t.lng - m.lng);
         m.lng += Math.cos(angle) * m.speed;
         m.lat += Math.sin(angle) * m.speed;
-        if(Math.hypot(t.lng - m.lng, t.lat - m.lat) < 0.001){
-            t.alive = false;
-            totalKills++;
-            spawnExplosion(t.lat, t.lng, t.isSwarmUnit);
-            addKill(`<span style="color:#00ffff;">FURY SQUAD:</span> Target Eliminated (Sidewinder).`);
-            return false; 
-        }
+        
         return true;
     });
 
@@ -1048,10 +1067,10 @@
         
         setTimeout(()=>{if(!isTelemetryActive&&!ttuActive)speak('Splash one',1);setTimeout(()=>checkKillStreakVoice(f,prev),2200)},1500);e.isKillStreakProcessed=true}}else addKill('SPLASH — TARGET DESTROYED (UNKNOWN ASSET)')}}})}return!hit});
     
-    // --- FIX FOR MISSILES NEVER GOING AWAY (Range Cleanup) ---
+    // --- UPDATED MISSILE CLEANUP RANGE ---
     projectiles = projectiles.filter(p => {
-        // Remove if too far
-        if(Math.hypot(p.lng - base.lng, p.lat - base.lat) > 0.05) return false;
+        // Remove if too far (INCREASED FROM 0.05 to 0.25)
+        if(Math.hypot(p.lng - base.lng, p.lat - base.lat) > 0.25) return false;
         return true;
     });
 
