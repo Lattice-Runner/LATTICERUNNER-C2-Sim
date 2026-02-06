@@ -662,7 +662,7 @@
         addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Fury Squadron Deployed.');
     }
 
-    // --- UPDATED AI RECOMMENDATION LOGIC ---
+    // --- REWRITTEN AI RECOMMENDATION LOGIC (FURY PRIORITY) ---
     function recommendSystem(){
         if(!playing){
             document.getElementById('recommendationText').textContent='SYSTEM OFFLINE.';
@@ -677,22 +677,22 @@
         const loiterers=imminent.filter(e=>e.isLoitererUnit);
         
         let idx=0;
-        imminent.forEach(e=>{idx+=e.isSwarmUnit?1.5:e.isLoitererUnit?2.0:1}); // Loiterers weight more
+        imminent.forEach(e=>{idx+=e.isSwarmUnit?1.5:e.isLoitererUnit?2.0:1}); 
         
         let best='NO IMMEDIATE THREATS DETECTED.';
-        let max=50;
+        let max=50; // Base threshold
         
-        // 1. EMP CHECK
+        // 1. EMP CHECK (High Density / Panic Button)
         if(empReady&&!ttuActive){
             let s=idx*5;
-            if(close.length>=3) s+=50;
+            if(close.length>=3) s+=50; 
             if(s>max){
                 max=s;
                 best='<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP (High threat density).';
             }
         }
         
-        // 2. TTU CHECK
+        // 2. TTU CHECK (Packets)
         if(ttuReady&&!ttuActive){
             let s=packets.length*10+unengaged.length*5;
             if(s>max){
@@ -701,7 +701,7 @@
             }
         }
         
-        // 3. CLG CHECK
+        // 3. CLG CHECK (Tracks)
         if(clgStatus==='READY'){
             let s=tracks.length*10-packets.length*15;
             if(s>max&&s>50){
@@ -710,11 +710,11 @@
             }
         }
         
-        // 4. ORS CHECK
+        // 4. ORS CHECK (Recovery)
         if(orsReady){
             const lost=friends.filter(f=>f.id===0).length;
             if(lost>0&&idx<5){
-                let s=lost*50;
+                let s=lost*60; // Increased weight for recovery
                 if(s>max){
                     max=s;
                     best='<span style="color:#00ffaa;font-weight:bold;">ORS SCAN:</span> Recommended (Recovery needed).';
@@ -722,20 +722,21 @@
             }
         }
         
-        // 5. FURY CHECK (New Logic)
+        // 5. FURY CHECK (Air Support - PRIORITY UPGRADE)
         if(furyReady){
             let s = 0;
-            if(loiterers.length > 0) s += 40; // Bonus for Loiterers (hard targets)
-            if(imminent.length >= 8) s += 30; // Bonus for mass waves
+            // HUGE bonus if Loiterers exist (Fighters are best against Heavy Air)
+            if(loiterers.length > 0) s += 150; 
+            // Moderate bonus for large waves
+            else if(imminent.length >= 6) s += 70; 
             
-            // Add base threat score
-            s += idx * 4;
+            // Base score per unit (Higher multiplier to beat CLG)
+            s += idx * 8; 
             
             if(s > max) {
                 max = s;
-                // Custom message based on why we triggered
                 if(loiterers.length > 0) 
-                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Heavy Armor Detected).';
+                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (HEAVY ARMOR DETECTED).';
                 else
                     best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Saturation Level High).';
             }
@@ -932,6 +933,9 @@
         
         if(f.logisticsState === 'ACTIVE') {
             f.fuel -= FUEL_BURN_RATE;
+            // FIX: Clamp fuel so it doesn't go negative in logic
+            if(f.fuel < 0) f.fuel = 0;
+            
             if(f.fuel <= 0 || f.missiles <= 0) {
                 f.logisticsState = 'RTB';
                 enemies.forEach(e => { if(e.engagedBy === f.id) e.engagedBy = undefined; });
