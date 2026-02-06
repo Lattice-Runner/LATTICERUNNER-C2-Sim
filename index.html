@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>LATTICERUNNER // 21.9 — PHYSICS UPDATE</title>
+<title>LATTICERUNNER // 21.10 — PRECISION UPDATE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
 <style>
@@ -183,7 +183,7 @@
 
 <div id="hud">
     <div style="font-weight:bold; font-size: 14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
-        LATTICERUNNER 21.9
+        LATTICERUNNER 21.10
     </div>
     <button id="pauseBtn" style="margin-bottom: 5px; background: rgba(0,255,0,0.15);">START SYSTEM</button>
     <div class="btn-grid">
@@ -233,7 +233,9 @@
 <script>
     mapboxgl.accessToken='pk.eyJ1IjoiY2hyaXNub3JkYWhsIiwiYSI6ImNtaXR3MXh6ZzFnaWgzZHBvOGt6Y2dhbjMifQ.H97o7anjU04vOv48DyOFNg';
     
-    const base={lat:34.8165,lng:-118.1980};
+    // --- UPDATED COORDINATES ---
+    const base={lat:34.81597,lng:-118.20015};
+    
     const baseHitIndicator=document.getElementById('baseHit');
     const baseThreshold=0.0018;
     const ID_RANGE = 0.060; 
@@ -965,8 +967,13 @@
 
         if(f.logisticsState === 'RTB') {
             const distToBase = Math.hypot(base.lng - f.lng, base.lat - f.lat);
-            if(distToBase < 0.0005) {
+            
+            // --- FIX FOR GLITCHING RTB (Added 'Arresting Gear' Snap) ---
+            // If very close OR if inside the "overshoot" range of the high speed, SNAP to center.
+            if(distToBase < 0.001 || distToBase < (f.speed * 3.5)) {
                 f.logisticsState = 'RESUPPLY';
+                f.lng = base.lng; // SNAP
+                f.lat = base.lat; // SNAP
             } else {
                 const a = Math.atan2(base.lat - f.lat, base.lng - f.lng);
                 f.lng += Math.cos(a) * (f.speed * 3.0);  // RTB SPEED BOOST (3x)
@@ -975,6 +982,9 @@
             }
         } 
         else if(f.logisticsState === 'RESUPPLY') {
+             // Stay put
+             f.lng = base.lng;
+             f.lat = base.lat;
         }
         else {
             enemies.forEach(e=>{
