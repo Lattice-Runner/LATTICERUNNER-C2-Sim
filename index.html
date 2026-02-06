@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>LATTICERUNNER // 21.6 — STABILITY PATCHED</title>
+<title>LATTICERUNNER // 21.8 — SPECTRUM DENIAL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
 <style>
@@ -85,6 +85,19 @@
     
     #furyBtn:disabled { border-color: #005555; color: #004444; }
     #furyBtn { margin-bottom: 5px; }
+
+    /* JAMMING BUTTON */
+    #jamBtn { 
+        margin-top: 5px; 
+        border-color: #555; 
+        color: #888; 
+    }
+    #jamBtn.active {
+        background: repeating-linear-gradient(45deg, #220000, #220000 10px, #440000 10px, #440000 20px);
+        border-color: #f00;
+        color: #f00;
+        animation: glitch-text 0.5s infinite;
+    }
     
     #wave{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(50, 0, 0, 0.8);backdrop-filter: blur(4px);color:#f00;padding:20px 40px;border:4px solid #f00;border-radius:12px;font-size:36px;font-weight:bold;z-index:100;opacity:0;transition:opacity .3s; pointer-events:none;}
     #wave.active{opacity:1}
@@ -125,10 +138,38 @@
     }
     #rebootBtn:hover { background: rgba(255, 0, 0, 0.4); box-shadow: 0 0 15px #f00; }
 
+    /* --- JAMMING FX --- */
+    #jamOverlay {
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; z-index: 15;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        display: none;
+        mix-blend-mode: hard-light;
+    }
+    .jammed-fx {
+        filter: grayscale(90%) contrast(1.4) brightness(0.7);
+        animation: glitch-anim 0.2s infinite;
+    }
+    @keyframes glitch-anim {
+        0% { transform: translate(0,0); }
+        20% { transform: translate(-1px, 1px); }
+        40% { transform: translate(-1px, -1px); }
+        60% { transform: translate(1px, 1px); }
+        80% { transform: translate(1px, -1px); }
+        100% { transform: translate(0,0); }
+    }
+
 </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="jamOverlay"></div>
 <div id="wave">WAVE <span id="wn">1</span> INCOMING</div>
 <div id="baseHit" class="base-hit"></div>
 
@@ -142,7 +183,7 @@
 
 <div id="hud">
     <div style="font-weight:bold; font-size: 14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
-        LATTICERUNNER 21.6
+        LATTICERUNNER 21.8
     </div>
     <button id="pauseBtn" style="margin-bottom: 5px; background: rgba(0,255,0,0.15);">START SYSTEM</button>
     <div class="btn-grid">
@@ -159,6 +200,7 @@
         <button id="ttuBtn" disabled>TTU LINK</button>
         <button id="orsBtn" disabled>ORS SCAN</button>
     </div>
+    <button id="jamBtn" disabled>SIMULATE JAMMING</button>
 </div>
 
 <div id="nowPlaying">
@@ -199,12 +241,12 @@
     
     const EMP_COOLDOWN_MS=50000;
     const EMP_DETONATION_RANGE=0.045; 
-    const EMP_KILL_RANGE=0.045;       
+    const EMP_KILL_RANGE=0.045;        
     
     const CLG_ACTIVATION_MS=20000;
     const CLG_SHUTDOWN_MS=30000; 
     const CLG_COOLDOWN_MS=60000;
-    const CLG_RANGE=0.012;       
+    const CLG_RANGE=0.012;        
     const CLG_HEAT_RATE = 0.21; 
     const CLG_COOL_RATE = 0.5; 
     const CLG_MAX_HEAT = 100;
@@ -252,6 +294,9 @@
     let lastAllClearVoiceTs=0;
     let isFirstStart=true;
     
+    // JAMMING STATE
+    let isJammed = false;
+
     let empReady=true;
     let empLastFiredTs=0;
     
@@ -428,9 +473,13 @@
             if(f.logisticsState === 'RTB') { color = '#ffff00'; statusText = 'RTB (LOW)'; }
             if(f.logisticsState === 'RESUPPLY') { color = '#00ffff'; statusText = 'RESUPPLY'; }
             
+            // FIX: Ensure no negative numbers display
+            const safeMissiles = Math.floor(Math.max(0, f.missiles));
+            const safeFuel = Math.floor(Math.max(0, f.fuel));
+            
             html+=`<div class="status-row" style="color:${color};font-size:11px;">
                 <span>${f.name}</span>
-                <span>[M:${Math.floor(f.missiles)} | F:${Math.floor(f.fuel)}%] ${statusText}</span>
+                <span>[M:${safeMissiles} | F:${safeFuel}%] ${statusText}</span>
             </div>`;
         });
         
@@ -458,7 +507,12 @@
         // SAFETY: Hide Game Over Screen on Init
         document.getElementById('gameOverScreen').style.display = 'none';
 
-        if(waveTimer)clearTimeout(waveTimer);if(telemetryInterval)clearInterval(telemetryInterval);if(resumeInterval)clearInterval(resumeInterval);if(recommendationInterval)clearInterval(recommendationInterval);
+        // CRITICAL FIX: Explicitly nullify intervals to prevent ghost timers
+        if(waveTimer) { clearTimeout(waveTimer); waveTimer = null; }
+        if(telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
+        if(resumeInterval) { clearInterval(resumeInterval); resumeInterval = null; }
+        if(recommendationInterval) { clearInterval(recommendationInterval); recommendationInterval = null; }
+
         friends=JSON.parse(JSON.stringify(friendInit)); 
         enemies=[];projectiles=[];explosions=[];publicContacts=[];nextId=111;waveNumber=1;totalKills=0;roadrunnerLosses=0;
         
@@ -475,6 +529,13 @@
         
         furyReady = true; furyLastFiredTs = 0; furySquad = []; furyMissiles = [];
         
+        // Reset Jamming
+        isJammed = false;
+        document.body.classList.remove('jammed-fx');
+        document.getElementById('jamOverlay').style.display = 'none';
+        document.getElementById('jamBtn').classList.remove('active');
+        document.getElementById('jamBtn').textContent = 'SIMULATE JAMMING';
+        
         document.getElementById('np-artist').textContent='System Offline';
         document.getElementById('np-track').textContent = 'Awaiting Input...';
         document.getElementById('esysStatus').innerHTML='E-System: <span style="color:#666;">INACTIVE</span>';
@@ -490,6 +551,32 @@
         
         refresh(); // Instant wipe
     }
+
+    function toggleJamming() {
+        if(!playing) return;
+        isJammed = !isJammed;
+        const btn = document.getElementById('jamBtn');
+        const overlay = document.getElementById('jamOverlay');
+        const body = document.body;
+        
+        if(isJammed) {
+            btn.textContent = 'LINK COMPROMISED';
+            btn.classList.add('active');
+            overlay.style.display = 'block';
+            body.classList.add('jammed-fx');
+            speak("Warning. Electronic Counter Measures detected. Spectrum denied.", 2);
+            addKill('<span style="color:#f00;font-weight:bold;">ALERT:</span> SPECTRUM DENIAL DETECTED.');
+        } else {
+            btn.textContent = 'SIMULATE JAMMING';
+            btn.classList.remove('active');
+            overlay.style.display = 'none';
+            body.classList.remove('jammed-fx');
+            speak("Spectrum clear. Link restored.", 1);
+            addKill('<span style="color:#0f0;font-weight:bold;">SYSTEM:</span> SPECTRUM RESTORED.');
+        }
+    }
+    
+    document.getElementById('jamBtn').onclick = toggleJamming;
 
     function spawnWave(){
         // CRITICAL FIX: Do not spawn if game stopped/reset
@@ -537,8 +624,10 @@
     function activateTTU(){if(!playing||!ttuReady||ttuActive)return;ttuReady=false;ttuActive=true;ttuLastFiredTs=Date.now();if(waveTimer){clearTimeout(waveTimer);waveTimer=null}music.pause();speechSynthesis.cancel();let idx=0;const avail=friends.filter(f=>f.id!==0);enemies.forEach(e=>{if(e.alive&&e.engagedBy===undefined&&avail.length>0){e.engagedBy=avail[idx%avail.length].id;idx++}});document.getElementById('ttuBtn').disabled=true;document.getElementById('ttuBtn').textContent='TTU ACTIVE';speak('Telemetry uplink active. All voice communication constrained.',1);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Tactical Telemetry Uplink Active! Packet lock-on enhanced.')}
     function activateORS(){if(!playing||!orsReady)return;orsReady=false;orsLastFiredTs=Date.now();orsDisruptionTs=Date.now();document.getElementById('orsBtn').disabled=true;const lost=friends.find(f=>f.id===0);if(lost){const orig=friendInit.find(f=>f.name===lost.name);if(orig){Object.assign(lost,JSON.parse(JSON.stringify(orig)));lost.id=orig.id;lost.currentStreak=0;lost.lastKillTs=0;speak('Asset recovery successful. Roadrunner restored to operational status.',1);addKill(`<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Asset Recovery Successful. ${lost.name} Restored.`)}else{speak('Error in asset tracking. No asset restored.',1);addKill('<span style="color:#ff3333;font-weight:bold;">ORS:</span> Recovery Failed. Asset Init Data Missing.')}}else{speak('Orbital Scan complete. No assets requiring recovery detected.',1);addKill('<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Scan Complete. No Losses Detected.')}speak('Warning. Scan detected. All enemy movement speed increased.',1)}
     function fireProjectile(f,t){
-        if(f.missiles <= 0) return;
-        f.missiles--; 
+        // FIX: STRICT CHECK - Cannot fire if less than 1 missile
+        if(f.missiles < 1) return;
+        
+        f.missiles = Math.max(0, f.missiles - 1); 
         t.engagedBy=f.id;
         const pkt=t.isSwarmUnit;
         const spd=0.0070;
@@ -658,6 +747,10 @@
     
     function update(){if(!playing)return;const now=Date.now();
     
+    // --- JAMMING LAG SIMULATION ---
+    // If jammed, skip update frames randomly (30% chance to skip)
+    if(isJammed && Math.random() < 0.3) return;
+
     if(isRegrouping){
         let allHome = true;
         friends.forEach(f => {
@@ -800,6 +893,10 @@
         furyBtn.textContent = "FURY AIR SUPPORT";
         furyBtn.disabled = !playing;
     }
+    
+    // JAMMING BUTTON UPDATE
+    const jamBtn = document.getElementById('jamBtn');
+    jamBtn.disabled = !playing;
 
     // --- DATA LINK: Global Threat ID ---
     if(furySquad.length > 0) {
@@ -1047,9 +1144,10 @@
             if(!resumeInterval) resumeInterval=setInterval(simulateResume,600000);
             if(!recommendationInterval) recommendationInterval=setInterval(recommendSystem,1000);
             
-            if(!waveTimer){
-                const delay = (waveNumber === 1 && enemies.length === 0) ? 3000 : 35000;
-                waveTimer=setTimeout(spawnWave, delay);
+            // CRITICAL FIX FOR RESTART SPAWN: If playing but no wave scheduled and no enemies, start now.
+            if(!waveTimer && enemies.filter(e => e.alive).length === 0){
+                 const delay = (waveNumber === 1) ? 3000 : 35000;
+                 waveTimer=setTimeout(spawnWave, delay);
             }
             music.play().catch(()=>{});
             addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Resumed.');
