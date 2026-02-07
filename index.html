@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>LATTICERUNNER // 21.10 — PRECISION UPDATE</title>
+<title>LATTICERUNNER // 21.11 — STABILITY HOTFIX</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
 <style>
@@ -183,7 +183,7 @@
 
 <div id="hud">
     <div style="font-weight:bold; font-size: 14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
-        LATTICERUNNER 21.10
+        LATTICERUNNER 21.11
     </div>
     <button id="pauseBtn" style="margin-bottom: 5px; background: rgba(0,255,0,0.15);">START SYSTEM</button>
     <div class="btn-grid">
@@ -233,7 +233,7 @@
 <script>
     mapboxgl.accessToken='pk.eyJ1IjoiY2hyaXNub3JkYWhsIiwiYSI6ImNtaXR3MXh6ZzFnaWgzZHBvOGt6Y2dhbjMifQ.H97o7anjU04vOv48DyOFNg';
     
-    // --- UPDATED COORDINATES ---
+    // --- FINAL COORDINATES ---
     const base={lat:34.81597,lng:-118.20015};
     
     const baseHitIndicator=document.getElementById('baseHit');
@@ -1198,6 +1198,9 @@
             if(resumeInterval) { clearInterval(resumeInterval); resumeInterval = null; }
             if(recommendationInterval) { clearInterval(recommendationInterval); recommendationInterval = null; }
             
+            // THE FIX FOR GHOST TIMERS ON RESUME
+            waveTimer = null; 
+
             document.getElementById('recommendationText').textContent='SYSTEM PAUSED.';
             addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> Tactical Pause Initiated.');
         }
