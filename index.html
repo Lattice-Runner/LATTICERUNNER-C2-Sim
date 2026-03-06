@@ -72,6 +72,33 @@
     .song-title-container{ display:inline-block; padding-left:100%; animation:marquee 10s linear infinite; }
     @keyframes marquee{0%{transform:translate(0,0)}100%{transform:translate(-100%,0)}}
     
+    /* =============================================
+       STATS BAR — persistent mission metrics
+       ============================================= */
+    #statsBar {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(6px);
+        border: 1px solid #0f0;
+        border-radius: 8px;
+        padding: 7px 18px;
+        display: flex;
+        gap: 24px;
+        z-index: 20;
+        font-size: 12px;
+        pointer-events: none;
+        box-shadow: 0 0 12px rgba(0,255,0,0.1);
+    }
+    .stat-item { display: flex; flex-direction: column; align-items: center; }
+    .stat-label { color: #555; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    .stat-value { color: #0f0; font-size: 15px; font-weight: bold; line-height: 1.2; }
+    .stat-value.red { color: #f00; }
+    .stat-value.cyan { color: #00ffff; }
+    .stat-value.yellow { color: #ffcc00; }
+
     .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px; }
     
     button{
@@ -165,6 +192,176 @@
         100% { transform: translate(0,0); }
     }
 
+    /* =============================================
+       INTRO SPLASH OVERLAY
+       ============================================= */
+    #introSplash {
+        position: absolute;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(8px);
+        z-index: 500;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        transition: opacity 0.8s ease;
+    }
+    #introSplash.fade-out {
+        opacity: 0;
+        pointer-events: none;
+    }
+    #introSplash h1 {
+        font-size: 42px;
+        letter-spacing: 6px;
+        color: #0f0;
+        margin: 0 0 8px 0;
+        text-shadow: 0 0 30px #0f0;
+    }
+    #introSplash .sub {
+        color: #00ffaa;
+        font-size: 13px;
+        letter-spacing: 3px;
+        margin-bottom: 30px;
+    }
+    #introSplash .desc {
+        max-width: 480px;
+        color: #888;
+        font-size: 12px;
+        line-height: 1.8;
+        border: 1px solid #1a1a1a;
+        padding: 16px 20px;
+        border-radius: 6px;
+        background: rgba(0,255,0,0.03);
+        margin-bottom: 30px;
+    }
+    #introSplash .desc span { color: #0f0; }
+    #introStartBtn {
+        background: rgba(0,255,0,0.1);
+        border: 1px solid #0f0;
+        color: #0f0;
+        padding: 14px 40px;
+        font-size: 14px;
+        letter-spacing: 3px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-family: monospace;
+        transition: all 0.2s;
+        text-transform: uppercase;
+    }
+    #introStartBtn:hover {
+        background: rgba(0,255,0,0.25);
+        box-shadow: 0 0 20px rgba(0,255,0,0.3);
+    }
+    .blink { animation: blink 1.2s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* =============================================
+       LATTICE REFERENCE PANEL
+       ============================================= */
+    #latticePanel {
+        position: absolute;
+        top: 60px;
+        left: 10px;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid #00ffaa;
+        border-radius: 8px;
+        width: 340px;
+        z-index: 25;
+        display: none;
+        box-shadow: 0 0 20px rgba(0,255,170,0.1);
+        overflow: hidden;
+    }
+    #latticePanel .panel-header {
+        background: rgba(0,255,170,0.08);
+        border-bottom: 1px solid #00ffaa;
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: default;
+    }
+    #latticePanel .panel-title {
+        color: #00ffaa;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
+    #latticePanelClose {
+        background: none;
+        border: none;
+        color: #00ffaa;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 0 4px;
+        width: auto;
+        line-height: 1;
+    }
+    #latticePanelClose:hover { background: none; color: #fff; box-shadow: none; }
+    #latticePanel .panel-body {
+        padding: 12px 14px;
+        font-size: 11px;
+        line-height: 1.5;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    #latticePanel .panel-body::-webkit-scrollbar { width: 3px; }
+    #latticePanel .panel-body::-webkit-scrollbar-thumb { background: #00ffaa; }
+    .ref-section { margin-bottom: 14px; }
+    .ref-section-title {
+        color: #00ffff;
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-bottom: 1px solid #111;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+    .ref-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 6px;
+        align-items: flex-start;
+    }
+    .ref-game {
+        color: #0f0;
+        font-weight: bold;
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+    .ref-real {
+        color: #aaa;
+        font-size: 10px;
+        line-height: 1.4;
+    }
+    .ref-real em {
+        color: #00ffaa;
+        font-style: normal;
+    }
+    .lattice-note {
+        background: rgba(0,255,170,0.04);
+        border-left: 2px solid #00ffaa;
+        padding: 8px 10px;
+        font-size: 10px;
+        color: #666;
+        line-height: 1.6;
+        margin-top: 10px;
+    }
+    .lattice-note span { color: #00ffaa; }
+
+    /* Toggle button in HUD */
+    #latticeToggleBtn {
+        margin-bottom: 5px;
+        border-color: #00ffaa;
+        color: #00ffaa;
+        background: rgba(0,255,170,0.06);
+        font-size: 11px;
+        letter-spacing: 1px;
+    }
+    #latticeToggleBtn:hover { background: rgba(0,255,170,0.18); box-shadow: 0 0 5px #00ffaa; }
+
 </style>
 </head>
 <body>
@@ -172,6 +369,140 @@
 <div id="jamOverlay"></div>
 <div id="wave">WAVE <span id="wn">1</span> INCOMING</div>
 <div id="baseHit" class="base-hit"></div>
+
+<!-- ============================================================
+     INTRO SPLASH
+     ============================================================ -->
+<div id="introSplash">
+    <h1>LATTICERUNNER</h1>
+    <div class="sub">AUTONOMOUS NETWORKED DEFENSE SIMULATION // v21.11</div>
+    <div class="desc">
+        A real-time simulation of <span>Lattice</span>-style autonomous asset coordination.<br><br>
+        Manage networked ground nodes, electronic warfare payloads, layered area denial, 
+        ISR pipelines, and air support CAS requests against escalating threat waves.<br><br>
+        <span>Toggle the LATTICE REF panel in-game to map each system to its real-world equivalent.</span>
+    </div>
+    <button id="introStartBtn"><span class="blink">▶</span> INITIALIZE SYSTEM</button>
+</div>
+
+<!-- ============================================================
+     LATTICE REFERENCE PANEL
+     ============================================================ -->
+<div id="latticePanel">
+    <div class="panel-header">
+        <span class="panel-title">⬡ LATTICE SYSTEM REFERENCE</span>
+        <button id="latticePanelClose">✕</button>
+    </div>
+    <div class="panel-body">
+
+        <div class="ref-section">
+            <div class="ref-section-title">Network Nodes</div>
+            <div class="ref-row">
+                <span class="ref-game">RR-01 → RR-10</span>
+                <span class="ref-real">Autonomous <em>Lattice nodes</em> — ground/air units that share a common operating picture, self-coordinate targeting, and report track state continuously to the mesh.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">HOSTILE TRACK</span>
+                <span class="ref-real"><em>Track object</em> in the Lattice data model — a fused contact with position, velocity, and classification attributes propagated across all nodes.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">UNKNOWN / IDENTIFIED</span>
+                <span class="ref-real"><em>IFF pipeline</em> — Lattice classifies contacts from UNKNOWN → SUSPECT → HOSTILE through sensor fusion and rules of engagement logic before authorizing engagement.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">PACKET (swarm)</span>
+                <span class="ref-real"><em>Low-cost UAS swarm</em> — small, fast attritable drones designed to saturate defenses. High volume, low signature.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">LOITERER</span>
+                <span class="ref-real"><em>Loitering munition</em> — autonomous platform that orbits a target area before terminal engagement. Slow but high-value threat.</span>
+            </div>
+        </div>
+
+        <div class="ref-section">
+            <div class="ref-section-title">Weapons & Effectors</div>
+            <div class="ref-row">
+                <span class="ref-game">EMP INTERDICTION</span>
+                <span class="ref-real"><em>Electronic warfare payload</em> — area denial through directed energy or RF jamming. Lattice nodes can coordinate EW effects across the battlespace.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">CLG GRID</span>
+                <span class="ref-real"><em>Layered area denial system</em> — analogous to Anduril's <em>Lattice-coordinated kinetic/directed energy perimeter</em>. Manages a fixed engagement zone with thermal constraints.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">FURY AIR SUPPORT</span>
+                <span class="ref-real"><em>CAS request via Lattice</em> — autonomous air wing tasked through the mesh. Lattice enables operators to request and manage air assets without voice comms to pilots.</span>
+            </div>
+        </div>
+
+        <div class="ref-section">
+            <div class="ref-section-title">C2 & ISR Systems</div>
+            <div class="ref-row">
+                <span class="ref-game">TTU LINK</span>
+                <span class="ref-real"><em>Tactical mesh uplink</em> — direct telemetry synchronization across all nodes. In Lattice, this represents the data-link layer that enables shared track state and coordinated targeting.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">ORS SCAN</span>
+                <span class="ref-real"><em>Overhead persistent ISR</em> — satellite or high-altitude sensor pass that provides full-battlespace awareness. Used for asset recovery and damage assessment.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">SIMULATE JAMMING / ECM</span>
+                <span class="ref-real"><em>Spectrum denial / Electronic Counter Measures</em> — adversary degradation of the data link. Lattice is designed to be resilient to comms-denied environments through autonomous node behavior.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">Kill Feed log</span>
+                <span class="ref-real"><em>Real-time track state log</em> — every engagement event, classification change, and system state update propagated to all nodes in the mesh simultaneously.</span>
+            </div>
+        </div>
+
+        <div class="ref-section">
+            <div class="ref-section-title">Logistics</div>
+            <div class="ref-row">
+                <span class="ref-game">RTB / RESUPPLY cycle</span>
+                <span class="ref-real"><em>Autonomous logistics loop</em> — Lattice nodes self-manage fuel and munitions state, autonomously routing back to supply points and returning to station without operator intervention.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">PANIC LAUNCH</span>
+                <span class="ref-real"><em>Emergency autonomous tasking</em> — when all active defenders are depleted, partially-resupplied nodes are autonomously scrambled. Reflects Lattice's resilience to operator absence.</span>
+            </div>
+        </div>
+
+        <div class="lattice-note">
+            <span>Anduril's Lattice</span> is a software-defined command and control platform that fuses sensor data from heterogeneous assets into a single operational picture, enabling autonomous and semi-autonomous engagement decisions. This simulation models the <span>coordination layer</span>, not individual hardware.
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================================
+     PERSISTENT STATS BAR
+     ============================================================ -->
+<div id="statsBar">
+    <div class="stat-item">
+        <span class="stat-label">Wave</span>
+        <span class="stat-value" id="statWave">—</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Kills</span>
+        <span class="stat-value cyan" id="statKills">0</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Active</span>
+        <span class="stat-value" id="statActive">—</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Losses</span>
+        <span class="stat-value red" id="statLosses">0</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value yellow" id="statStreak">0</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Threats</span>
+        <span class="stat-value" id="statThreats">0</span>
+    </div>
+</div>
 
 <div id="gameOverScreen">
     <h1>MISSION FAILED</h1>
@@ -190,6 +521,8 @@
         <button id="resetBtn">RESET</button>
         <button id="skipBtn">SKIP SONG</button>
     </div>
+    <!-- Lattice Ref toggle -->
+    <button id="latticeToggleBtn">⬡ LATTICE SYSTEM REF</button>
     <hr style="border-color:#0f0; opacity:0.2; margin: 8px 0;">
     <button id="furyBtn" disabled style="color: #00ffff; border-color: #00ffff; background: rgba(0,255,255,0.15);">FURY AIR SUPPORT</button>
     <div class="btn-grid">
@@ -276,6 +609,9 @@
     let playing=false;
     let friends=[],enemies=[],projectiles=[],explosions=[],nextId=1;
     
+    // BUG FIX #1: publicContacts was referenced in init() but never declared
+    let publicContacts = [];
+
     let furySquad = [];
     let furyMissiles = [];
     
@@ -348,7 +684,6 @@
     });
 
     map.on('load', () => {
-        // --- ADDED BASE ICON ---
         map.addSource('base-icon', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: [base.lng, base.lat] } } });
         map.addLayer({
             id: 'base-icon-layer', type: 'circle', source: 'base-icon',
@@ -428,14 +763,48 @@
         map.resize();
     });
 
+    // ============================================================
+    // STATS BAR UPDATE
+    // ============================================================
+    function updateStatsBar() {
+        const activeAssets = friends.filter(f => f.id !== 0).length;
+        const aliveEnemies = enemies.filter(e => e.alive).length;
+        document.getElementById('statWave').textContent = playing ? (waveNumber - 1) || '—' : '—';
+        document.getElementById('statKills').textContent = totalKills;
+        document.getElementById('statActive').textContent = playing ? activeAssets : '—';
+        document.getElementById('statLosses').textContent = roadrunnerLosses;
+        document.getElementById('statStreak').textContent = sessionHighStreak;
+        document.getElementById('statThreats').textContent = playing ? aliveEnemies : '—';
+    }
+
+    // ============================================================
+    // LATTICE REFERENCE PANEL TOGGLE
+    // ============================================================
+    document.getElementById('latticeToggleBtn').onclick = () => {
+        const panel = document.getElementById('latticePanel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    };
+    document.getElementById('latticePanelClose').onclick = () => {
+        document.getElementById('latticePanel').style.display = 'none';
+    };
+
+    // ============================================================
+    // INTRO SPLASH — dismiss and then auto-start
+    // ============================================================
+    document.getElementById('introStartBtn').onclick = () => {
+        const splash = document.getElementById('introSplash');
+        splash.classList.add('fade-out');
+        setTimeout(() => { splash.style.display = 'none'; }, 800);
+    };
+
     function spawnExplosion(lat, lng, swarm, isBigEMP=false) {
         const n = Date.now();
         explosions.push({
             id: n, lng, lat,
             startTime: n,
-            duration: isBigEMP ? 1200 : 600, // Longer for EMP
+            duration: isBigEMP ? 1200 : 600,
             isSwarmUnit: swarm,
-            isBigEMP: isBigEMP // Pass flag for render logic
+            isBigEMP: isBigEMP
         });
     }
 
@@ -446,7 +815,12 @@
     }
     function shuffleArray(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
     function startPlaylist(){let full=[...masterPlaylist];let rem=[];for(const u of full){if(!fixedOrderUrls.some(f=>u.startsWith(f.split('&st=')[0])))rem.push(u)}shuffleArray(rem);shuffledPlaylist=fixedOrderUrls.concat(rem);currentSongIndex=-1;document.getElementById('np-artist').textContent='Initializing...'}
-    function playNextSong(){if(ttuActive||!playing)return;if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();music.onerror=()=>{addKill(`<span style="color:#ff3333;font-weight:bold;">Audio #${currentSongIndex+1} failed.</span>`);playNextSong()};music.play().catch(()=>{if(playing)speak('Warning. Audio system blocked. Re-engaging audio on next wave.',1)})}music.addEventListener('ended',playNextSong);
+    function playNextSong(){if(ttuActive||!playing)return;if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();
+        // BUG FIX #3: Suppress the noisy audio error in killfeed — handle silently
+        music.onerror=()=>{ playNextSong(); };
+        music.play().catch(()=>{ addKill('<span style="color:#ffcc00;font-weight:bold;">AUDIO:</span> Click SKIP SONG to enable audio (browser policy).'); });
+    }
+    music.addEventListener('ended',playNextSong);
     
     function speak(t,p=0){
         if(ttuActive)return;
@@ -475,64 +849,56 @@
     
     function updateRoadrunnerStatus(){
         let html='<span style="font-weight:bold;color:#00ffaa;margin-bottom:6px;display:block;">ROADRUNNER LOGISTICS:</span>';
-        
         const all=friends.length===0?JSON.parse(JSON.stringify(friendInit)):[...friends];
         const sorted=all.sort((a,b)=>{if(a.id===0&&b.id!==0)return 1;if(a.id!==0&&b.id===0)return-1;return parseInt(a.name.replace('RR-','')||0)-parseInt(b.name.replace('RR-','')||0)});
-        
         sorted.forEach(f=>{
             if(f.id === 0) return; 
             let color = '#00ffaa';
             let statusText = 'ACTIVE';
-            
             if(f.logisticsState === 'RTB') { color = '#ffff00'; statusText = 'RTB (LOW)'; }
             if(f.logisticsState === 'RESUPPLY') { color = '#00ffff'; statusText = 'RESUPPLY'; }
-            
-            // FIX: Ensure no negative numbers display
             const safeMissiles = Math.floor(Math.max(0, f.missiles));
             const safeFuel = Math.floor(Math.max(0, f.fuel));
-            
             html+=`<div class="status-row" style="color:${color};font-size:11px;">
                 <span>${f.name}</span>
                 <span>[M:${safeMissiles} | F:${safeFuel}%] ${statusText}</span>
             </div>`;
         });
-        
         const op=friends.filter(f=>f.id!==0).length;
         html+=`<div style="border-top:1px solid #0f0;margin-top:4px;padding-top:4px;font-size:11px;">
             <span style="color:#00ffff;">OP ASSETS: ${op}</span> | <span style="color:#f00;">LOSSES: ${roadrunnerLosses}</span>
         </div>`;
-        
         document.getElementById('roadrunnerStatus').innerHTML=html;
     }
 
     function flashBaseHit(){baseHitIndicator.style.opacity=1;setTimeout(()=>{baseHitIndicator.style.opacity=0},300)}
     
-    // --- SHOW GAME OVER SCREEN ---
     function showGameOver(){
         const screen = document.getElementById('gameOverScreen');
         screen.style.display = 'block';
         document.getElementById('goWave').innerText = waveNumber;
         document.getElementById('goKills').innerText = totalKills;
-        document.getElementById('goStreak').innerText = sessionHighStreak; // CORRECTED VAR
+        document.getElementById('goStreak').innerText = sessionHighStreak;
         speak("Critical failure. System compromise imminent. Mission terminated.", 2);
     }
 
     function init(){
-        // SAFETY: Hide Game Over Screen on Init
         document.getElementById('gameOverScreen').style.display = 'none';
 
-        // CRITICAL FIX: Explicitly nullify intervals to prevent ghost timers
+        // BUG FIX #2: Nullify all timers on init to prevent ghost timer stacking
         if(waveTimer) { clearTimeout(waveTimer); waveTimer = null; }
         if(telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
         if(resumeInterval) { clearInterval(resumeInterval); resumeInterval = null; }
         if(recommendationInterval) { clearInterval(recommendationInterval); recommendationInterval = null; }
 
         friends=JSON.parse(JSON.stringify(friendInit)); 
-        enemies=[];projectiles=[];explosions=[];publicContacts=[];nextId=111;waveNumber=1;totalKills=0;roadrunnerLosses=0;
+        enemies=[];projectiles=[];explosions=[];
+        // BUG FIX #1 (init reset): publicContacts properly reset here too
+        publicContacts=[];
+        nextId=111;waveNumber=1;totalKills=0;roadrunnerLosses=0;
         
-        // RESET STREAK VARS
-        highestStreak=0; // Active streak of living agents
-        sessionHighStreak=0; // The record
+        highestStreak=0;
+        sessionHighStreak=0;
         
         lastStreakSpokenTs=0;lastKillFeedLogTs=0;lastTelemetryLogTs=0;lastAllClearVoiceTs=0;empReady=true;empLastFiredTs=0;
         
@@ -543,7 +909,6 @@
         
         furyReady = true; furyLastFiredTs = 0; furySquad = []; furyMissiles = [];
         
-        // Reset Jamming
         isJammed = false;
         document.body.classList.remove('jammed-fx');
         document.getElementById('jamOverlay').style.display = 'none';
@@ -562,8 +927,9 @@
         document.getElementById('pauseBtn').textContent='START SYSTEM';
         document.getElementById('ttuBtn').textContent='TTU LINK';
         document.getElementById('clgBtn').textContent='CLG GRID';
-        
-        refresh(); // Instant wipe
+
+        updateStatsBar();
+        refresh();
     }
 
     function toggleJamming() {
@@ -572,7 +938,6 @@
         const btn = document.getElementById('jamBtn');
         const overlay = document.getElementById('jamOverlay');
         const body = document.body;
-        
         if(isJammed) {
             btn.textContent = 'LINK COMPROMISED';
             btn.classList.add('active');
@@ -589,36 +954,25 @@
             addKill('<span style="color:#0f0;font-weight:bold;">SYSTEM:</span> SPECTRUM RESTORED.');
         }
     }
-    
     document.getElementById('jamBtn').onclick = toggleJamming;
 
     function spawnWave(){
-        // CRITICAL FIX: Do not spawn if game stopped/reset
         if(!playing) return;
-
         isRegrouping=false;
         const baseCount=Math.floor(Math.random()*8)+7;const escalation=(waveNumber-1)*ENEMY_INCREASE_PER_WAVE;const total=baseCount+escalation;let packets=0,loiterers=0,tracks=0;for(let i=0;i<total;i++){let type='TRACK';const r=Math.random();const pProb=0.20+(waveNumber*0.02);const lProb=0.10+(waveNumber*0.015);if(waveNumber>=3&&r<pProb){type='PACKET';packets++}else if(waveNumber>=4&&r<lProb){type='LOITERER';loiterers++}else tracks++;const isP=type==='PACKET';const isL=type==='LOITERER';const speed=isP?0.0012:isL?0.0003:0.0008;
-        
         const d=(0.040+Math.random()*0.010) * 3.0; 
-        
         enemies.push({id:nextId++,lat:base.lat+Math.sin(Math.random()*Math.PI*2)*d,lng:base.lng+Math.cos(Math.random()*Math.PI*2)*d,speed,alive:true,identified:false,engagedBy:undefined,isEngagementCounted:false,isKillStreakProcessed:false,isSwarmUnit:isP,isLoitererUnit:isL,type})}let summary=`${total} threats`;if(packets>0)summary+=` (<span style="color:#ffcc00;">PACKETS: ${packets}</span>)`;if(loiterers>0)summary+=` (<span style="color:#00ff77;">LOITERERS: ${loiterers}</span>)`;if(tracks>0)summary+=` (<span style="color:#f00;">TRACKS: ${tracks}</span>)`;const voice=waveNumber===1?`Initial contacts registered. Proceed to identify.`:`Wave ${waveNumber} inbound. ${loiterers>0?'Long range assets detected. ':''}${total} unclassified tracks.`;addKill(`<span style="color:#f00;">WAVE ${waveNumber} INCOMING — ${summary}</span>`);if(!isTelemetryActive&&!ttuActive)speak(voice,1);document.getElementById('wn').textContent=waveNumber++;document.getElementById('wave').classList.add('active');setTimeout(()=>document.getElementById('wave').classList.remove('active'),3000);
-        
-        // SCHEDULE NEXT
         if(waveTimer) clearTimeout(waveTimer);
         waveTimer=setTimeout(spawnWave,35000);
     }
 
-    function fireEMPInterdiction(){const n=Date.now();if(!playing||!empReady||isTelemetryActive)return;empReady=false;empLastFiredTs=n;document.getElementById('empBtn').disabled=true;const spd=0.0030; // Doubled speed
-    projectiles.push({lng:base.lng,lat:base.lat+EMP_DETONATION_RANGE,vx:0,vy:-spd,firerId:0,isEMP:true,detonationRange:EMP_DETONATION_RANGE,isAntiPacket:false});addKill('<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP Interdiction Launched.');speak('EMP Interdiction missile launched. Standby for area denial.',1)}
+    function fireEMPInterdiction(){const n=Date.now();if(!playing||!empReady||isTelemetryActive)return;empReady=false;empLastFiredTs=n;document.getElementById('empBtn').disabled=true;const spd=0.0030;projectiles.push({lng:base.lng,lat:base.lat+EMP_DETONATION_RANGE,vx:0,vy:-spd,firerId:0,isEMP:true,detonationRange:EMP_DETONATION_RANGE,isAntiPacket:false});addKill('<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP Interdiction Launched.');speak('EMP Interdiction missile launched. Standby for area denial.',1)}
     
     function toggleCLG(){
         if(!playing)return;
         const n=Date.now();
         if(clgStatus==='READY'){
-            if(clgHeat >= 90) {
-                speak('System too hot to engage.', 1);
-                return;
-            }
+            if(clgHeat >= 90) { speak('System too hot to engage.', 1); return; }
             clgStatus='ACTIVATING';
             clgTargetTs=n+CLG_ACTIVATION_MS;
             document.getElementById('clgBtn').textContent='CLG ACTIVATING';
@@ -638,20 +992,13 @@
     function activateTTU(){if(!playing||!ttuReady||ttuActive)return;ttuReady=false;ttuActive=true;ttuLastFiredTs=Date.now();if(waveTimer){clearTimeout(waveTimer);waveTimer=null}music.pause();speechSynthesis.cancel();let idx=0;const avail=friends.filter(f=>f.id!==0);enemies.forEach(e=>{if(e.alive&&e.engagedBy===undefined&&avail.length>0){e.engagedBy=avail[idx%avail.length].id;idx++}});document.getElementById('ttuBtn').disabled=true;document.getElementById('ttuBtn').textContent='TTU ACTIVE';speak('Telemetry uplink active. All voice communication constrained.',1);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Tactical Telemetry Uplink Active! Packet lock-on enhanced.')}
     function activateORS(){if(!playing||!orsReady)return;orsReady=false;orsLastFiredTs=Date.now();orsDisruptionTs=Date.now();document.getElementById('orsBtn').disabled=true;const lost=friends.find(f=>f.id===0);if(lost){const orig=friendInit.find(f=>f.name===lost.name);if(orig){Object.assign(lost,JSON.parse(JSON.stringify(orig)));lost.id=orig.id;lost.currentStreak=0;lost.lastKillTs=0;speak('Asset recovery successful. Roadrunner restored to operational status.',1);addKill(`<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Asset Recovery Successful. ${lost.name} Restored.`)}else{speak('Error in asset tracking. No asset restored.',1);addKill('<span style="color:#ff3333;font-weight:bold;">ORS:</span> Recovery Failed. Asset Init Data Missing.')}}else{speak('Orbital Scan complete. No assets requiring recovery detected.',1);addKill('<span style="color:#00ffaa;font-weight:bold;">ORS:</span> Scan Complete. No Losses Detected.')}speak('Warning. Scan detected. All enemy movement speed increased.',1)}
     function fireProjectile(f,t){
-        // FIX: STRICT CHECK - Cannot fire if less than 1 missile
         if(f.missiles < 1) return;
-        
         f.missiles = Math.max(0, f.missiles - 1); 
         t.engagedBy=f.id;
         const pkt=t.isSwarmUnit;
         const spd=0.0070;
         const a=Math.atan2(t.lat-f.lat,t.lng-f.lng);
-        projectiles.push({
-            lng:f.lng, lat:f.lat,
-            vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
-            firerId:f.id, firerName:f.name,
-            isAntiPacket:pkt, isEMP:false
-        })
+        projectiles.push({lng:f.lng,lat:f.lat,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,firerId:f.id,firerName:f.name,isAntiPacket:pkt,isEMP:false})
     }
 
     function launchFurySquad(){
@@ -669,101 +1016,39 @@
                 vx: 0,
                 vy: FURY_SPEED, 
                 firedCount: 0,
-                ammo: 10 // Increased Ammo
+                ammo: 10
             });
         });
         speak("Air support inbound. Fury squadron engaging.", 1);
         addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Fury Squadron Deployed.');
     }
 
-    // --- REWRITTEN AI RECOMMENDATION LOGIC (FURY PRIORITY) ---
     function recommendSystem(){
         if(!playing){
             document.getElementById('recommendationText').textContent='SYSTEM OFFLINE.';
             return;
         }
-        
         const imminent=enemies.filter(e=>e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<0.02);
         const close=enemies.filter(e=>e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<EMP_KILL_RANGE);
         const unengaged=imminent.filter(e=>e.engagedBy===undefined);
         const packets=imminent.filter(e=>e.isSwarmUnit);
         const tracks=imminent.filter(e=>!e.isSwarmUnit&&!e.isLoitererUnit);
         const loiterers=imminent.filter(e=>e.isLoitererUnit);
-        
         let idx=0;
         imminent.forEach(e=>{idx+=e.isSwarmUnit?1.5:e.isLoitererUnit?2.0:1}); 
-        
         let best='NO IMMEDIATE THREATS DETECTED.';
-        let max=50; // Base threshold
-        
-        // 1. EMP CHECK (High Density / Panic Button)
-        if(empReady&&!ttuActive){
-            let s=idx*5;
-            if(close.length>=3) s+=50; 
-            if(s>max){
-                max=s;
-                best='<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP (High threat density).';
-            }
-        }
-        
-        // 2. TTU CHECK (Packets)
-        if(ttuReady&&!ttuActive){
-            let s=packets.length*10+unengaged.length*5;
-            if(s>max){
-                max=s;
-                best='<span style="color:#00ffff;font-weight:bold;">TTU LINK:</span> Recommended (Packets/Unengaged).';
-            }
-        }
-        
-        // 3. CLG CHECK (Tracks)
-        if(clgStatus==='READY'){
-            let s=tracks.length*10-packets.length*15;
-            if(s>max&&s>50){
-                max=s;
-                best='<span style="color:#ff00ff;font-weight:bold;">CLG GRID:</span> Recommended (Tracks closing).';
-            }
-        }
-        
-        // 4. ORS CHECK (Recovery)
-        if(orsReady){
-            const lost=friends.filter(f=>f.id===0).length;
-            if(lost>0&&idx<5){
-                let s=lost*60; // Increased weight for recovery
-                if(s>max){
-                    max=s;
-                    best='<span style="color:#00ffaa;font-weight:bold;">ORS SCAN:</span> Recommended (Recovery needed).';
-                }
-            }
-        }
-        
-        // 5. FURY CHECK (Air Support - PRIORITY UPGRADE)
-        if(furyReady){
-            let s = 0;
-            // HUGE bonus if Loiterers exist (Fighters are best against Heavy Air)
-            if(loiterers.length > 0) s += 150; 
-            // Moderate bonus for large waves
-            else if(imminent.length >= 6) s += 70; 
-            
-            // Base score per unit (Higher multiplier to beat CLG)
-            s += idx * 8; 
-            
-            if(s > max) {
-                max = s;
-                if(loiterers.length > 0) 
-                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (HEAVY ARMOR DETECTED).';
-                else
-                    best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Saturation Level High).';
-            }
-        }
-        
-        if(max<=50) best='NO IMMEDIATE ACTION REQUIRED.';
+        let max=50;
+        if(empReady&&!ttuActive){let s=idx*5;if(close.length>=3)s+=50;if(s>max){max=s;best='<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> EMP (High threat density).';}}
+        if(ttuReady&&!ttuActive){let s=packets.length*10+unengaged.length*5;if(s>max){max=s;best='<span style="color:#00ffff;font-weight:bold;">TTU LINK:</span> Recommended (Packets/Unengaged).';}}
+        if(clgStatus==='READY'){let s=tracks.length*10-packets.length*15;if(s>max&&s>50){max=s;best='<span style="color:#ff00ff;font-weight:bold;">CLG GRID:</span> Recommended (Tracks closing).';}}
+        if(orsReady){const lost=friends.filter(f=>f.id===0).length;if(lost>0&&idx<5){let s=lost*60;if(s>max){max=s;best='<span style="color:#00ffaa;font-weight:bold;">ORS SCAN:</span> Recommended (Recovery needed).'}}}
+        if(furyReady){let s=0;if(loiterers.length>0)s+=150;else if(imminent.length>=6)s+=70;s+=idx*8;if(s>max){max=s;if(loiterers.length>0)best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (HEAVY ARMOR DETECTED).';else best='<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Recommended (Saturation Level High).';}}
+        if(max<=50)best='NO IMMEDIATE ACTION REQUIRED.';
         document.getElementById('recommendationText').innerHTML=best;
     }
     
     function update(){if(!playing)return;const now=Date.now();
     
-    // --- JAMMING LAG SIMULATION ---
-    // If jammed, skip update frames randomly (30% chance to skip)
     if(isJammed && Math.random() < 0.3) return;
 
     if(isRegrouping){
@@ -788,443 +1073,89 @@
         if(allHome) isRegrouping = false;
     }
 
-    // --- UPDATED CLG STATUS LOGIC ---
-    if(clgStatus==='ACTIVATING'&&now>=clgTargetTs){
-        clgStatus='ACTIVE';
-        document.getElementById('clgBtn').textContent='CLG ACTIVE';
-        document.getElementById('clgBtn').disabled=false; // Allow shutdown
-        speak('Laser Grid fully operational.',1);
-        if(map.getLayer('clg-perimeter')) {
-            map.setPaintProperty('clg-perimeter','circle-opacity',0.4);
-            map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.8);
-        }
-        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Operational. Mobility degraded.');
-    } else if(clgStatus==='SHUTTING_DOWN'&&now>=clgTargetTs){
-        clgStatus='COOLDOWN'; // New state
-        clgTargetTs = now + CLG_COOLDOWN_MS;
-        document.getElementById('clgBtn').disabled=true;
-        speak('Laser Grid offline. System cooling down.',1);
-        if(map.getLayer('clg-perimeter')) {
-            map.setPaintProperty('clg-perimeter','circle-opacity',0.0);
-            map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0);
-        }
-        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Cooldown Initiated.');
-    } else if(clgStatus==='COOLDOWN'&&now>=clgTargetTs){
-        clgStatus='READY';
-        document.getElementById('clgBtn').textContent='CLG GRID';
-        document.getElementById('clgBtn').disabled=false;
-        speak('Laser Grid systems recharged and ready.',1);
-        addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Systems Recharged.');
-    } else if(clgStatus === 'OVERHEAT' && clgHeat <= 0){
-        // Recovered from overheat
-        clgStatus = 'READY';
-        document.getElementById('clgBtn').textContent='CLG GRID';
-        document.getElementById('clgBtn').disabled=false;
-        speak('Laser Grid temperature nominal. Systems rebooted.', 1);
-        addKill('<span style="color:#00ffaa;font-weight:bold;">CLG:</span> Overheat Cycle Complete. Ready.');
-    }
-
-    // --- CLG HEAT LOGIC ---
-    if(clgStatus === 'ACTIVE'){
-        clgHeat += CLG_HEAT_RATE;
-        if(clgHeat >= CLG_MAX_HEAT){
-            clgHeat = CLG_MAX_HEAT;
-            clgStatus = 'OVERHEAT';
-            document.getElementById('clgBtn').disabled = true;
-            speak('Warning. Laser Grid overheat. Emergency shutdown initiated.', 1);
-            addKill('<span style="color:#ff0000;font-weight:bold;">CLG:</span> CRITICAL OVERHEAT! SHUTTING DOWN.');
-            if(map.getLayer('clg-perimeter')) {
-                map.setPaintProperty('clg-perimeter','circle-opacity',0.0);
-                map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0);
-            }
-        }
-    } else {
-        clgHeat = Math.max(0, clgHeat - CLG_COOL_RATE);
-    }
-
+    if(clgStatus==='ACTIVATING'&&now>=clgTargetTs){clgStatus='ACTIVE';document.getElementById('clgBtn').textContent='CLG ACTIVE';document.getElementById('clgBtn').disabled=false;speak('Laser Grid fully operational.',1);if(map.getLayer('clg-perimeter')){map.setPaintProperty('clg-perimeter','circle-opacity',0.4);map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.8)}addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Operational. Mobility degraded.')}else if(clgStatus==='SHUTTING_DOWN'&&now>=clgTargetTs){clgStatus='COOLDOWN';clgTargetTs=now+CLG_COOLDOWN_MS;document.getElementById('clgBtn').disabled=true;speak('Laser Grid offline. System cooling down.',1);if(map.getLayer('clg-perimeter')){map.setPaintProperty('clg-perimeter','circle-opacity',0.0);map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0)}addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Cooldown Initiated.')}else if(clgStatus==='COOLDOWN'&&now>=clgTargetTs){clgStatus='READY';document.getElementById('clgBtn').textContent='CLG GRID';document.getElementById('clgBtn').disabled=false;speak('Laser Grid systems recharged and ready.',1);addKill('<span style="color:#ff00ff;font-weight:bold;">CLG:</span> Systems Recharged.')}else if(clgStatus==='OVERHEAT'&&clgHeat<=0){clgStatus='READY';document.getElementById('clgBtn').textContent='CLG GRID';document.getElementById('clgBtn').disabled=false;speak('Laser Grid temperature nominal. Systems rebooted.',1);addKill('<span style="color:#00ffaa;font-weight:bold;">CLG:</span> Overheat Cycle Complete. Ready.')}
+    if(clgStatus==='ACTIVE'){clgHeat+=CLG_HEAT_RATE;if(clgHeat>=CLG_MAX_HEAT){clgHeat=CLG_MAX_HEAT;clgStatus='OVERHEAT';document.getElementById('clgBtn').disabled=true;speak('Warning. Laser Grid overheat. Emergency shutdown initiated.',1);addKill('<span style="color:#ff0000;font-weight:bold;">CLG:</span> CRITICAL OVERHEAT! SHUTTING DOWN.');if(map.getLayer('clg-perimeter')){map.setPaintProperty('clg-perimeter','circle-opacity',0.0);map.setPaintProperty('clg-perimeter','circle-stroke-opacity',0.0)}}}else{clgHeat=Math.max(0,clgHeat-CLG_COOL_RATE)}
     if(!empReady&&now-empLastFiredTs>=EMP_COOLDOWN_MS){empReady=true;speak('EMP Interdiction system fully charged and ready.',1);addKill('<span style="color:#00ffff;font-weight:bold;">E-SYSTEM:</span> Charging Complete. Ready to Fire.')}if(ttuActive&&now-ttuLastFiredTs>=TTU_DURATION_MS){ttuActive=false;playNextSong();if(enemies.filter(e=>e.alive).length===0){if(waveTimer)clearTimeout(waveTimer);waveTimer=setTimeout(spawnWave,10000);speak('Telemetry uplink complete. Resuming wave rotation.',1);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Uplink Complete. Resuming Wave Rotation.')}else{speak('Telemetry uplink complete. Systems normalized.',1);if(!waveTimer)waveTimer=setTimeout(spawnWave,35000);addKill('<span style="color:#00ffff;font-weight:bold;">TTU:</span> Uplink Complete. System normalizing.')}document.getElementById('ttuBtn').textContent='TTU LINK'}if(!ttuReady&&now-ttuLastFiredTs>=TTU_COOLDOWN_MS){ttuReady=true;speak('Telemetry Uplink ready.',1)}if(!orsReady&&now-orsLastFiredTs>=ORS_COOLDOWN_MS){orsReady=true;speak('Orbital Reconnaissance Scan ready.',1)}let enemySpeedMul=1;let orsRemain=0;if(now-orsDisruptionTs<ORS_DISRUPTION_DURATION_MS){enemySpeedMul=1.5;orsRemain=Math.ceil((ORS_DISRUPTION_DURATION_MS-(now-orsDisruptionTs))/1000)}const empBtn=document.getElementById('empBtn');if(!empReady){const s=Math.ceil((EMP_COOLDOWN_MS-(now-empLastFiredTs))/1000);document.getElementById('esysStatus').innerHTML=`E-System: <span style="color:#ffcc00;">CHARGING (${s}s)</span>`;empBtn.disabled=true}else{document.getElementById('esysStatus').innerHTML=`E-System: <span style="color:#00ffaa;font-weight:bold;">READY</span>`;empBtn.disabled=!playing}
-    
-    // CLG BUTTON UPDATE
-    const clgBtn=document.getElementById('clgBtn');
-    if(clgStatus === 'OVERHEAT'){
-        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff0000;font-weight:bold;">OVERHEAT (${Math.floor(clgHeat)}%)</span>`;
-        clgBtn.textContent = `COOLING ${Math.floor(clgHeat)}%`;
-        clgBtn.disabled = true;
-    } else if(clgStatus==='ACTIVATING'||clgStatus==='SHUTTING_DOWN'){
-        const s=Math.ceil((clgTargetTs-now)/1000);
-        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff00ff;font-weight:bold;">${clgStatus} (${s}s)</span>`;
-        clgBtn.disabled=true;
-    } else if(clgStatus==='COOLDOWN'){
-        const s=Math.ceil((clgTargetTs-now)/1000);
-        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`;
-        clgBtn.textContent = `CLG (${s}s)`;
-        clgBtn.disabled=true;
-    } else if(clgStatus==='ACTIVE'){
-        // SHOW HEAT LEVEL
-        let color = clgHeat > 70 ? '#ff0000' : '#ff00ff';
-        document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:${color};font-weight:bold;">ACTIVE (${Math.floor(clgHeat)}%)</span>`;
-        clgBtn.textContent=`DEACTIVATE (${Math.floor(clgHeat)}%)`;
-        clgBtn.disabled=!playing;
-        clgBtn.style.color = color;
-        clgBtn.style.borderColor = color;
-    } else{
-        // READY state (show remaining heat if any)
-        if(clgHeat > 0){
-             document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffff00;">COOLING (${Math.floor(clgHeat)}%)</span>`;
-             clgBtn.textContent=`CLG (${Math.floor(clgHeat)}%)`;
-        } else {
-             document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#00ffaa;">READY</span>`;
-             clgBtn.textContent='CLG GRID';
-        }
-        clgBtn.disabled=!playing;
-        clgBtn.style.color = '#0f0';
-        clgBtn.style.borderColor = '#0f0';
-    }
-
+    const clgBtn=document.getElementById('clgBtn');if(clgStatus==='OVERHEAT'){document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff0000;font-weight:bold;">OVERHEAT (${Math.floor(clgHeat)}%)</span>`;clgBtn.textContent=`COOLING ${Math.floor(clgHeat)}%`;clgBtn.disabled=true}else if(clgStatus==='ACTIVATING'||clgStatus==='SHUTTING_DOWN'){const s=Math.ceil((clgTargetTs-now)/1000);document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ff00ff;font-weight:bold;">${clgStatus} (${s}s)</span>`;clgBtn.disabled=true}else if(clgStatus==='COOLDOWN'){const s=Math.ceil((clgTargetTs-now)/1000);document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`;clgBtn.textContent=`CLG (${s}s)`;clgBtn.disabled=true}else if(clgStatus==='ACTIVE'){let color=clgHeat>70?'#ff0000':'#ff00ff';document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:${color};font-weight:bold;">ACTIVE (${Math.floor(clgHeat)}%)</span>`;clgBtn.textContent=`DEACTIVATE (${Math.floor(clgHeat)}%)`;clgBtn.disabled=!playing;clgBtn.style.color=color;clgBtn.style.borderColor=color}else{if(clgHeat>0){document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#ffff00;">COOLING (${Math.floor(clgHeat)}%)</span>`;clgBtn.textContent=`CLG (${Math.floor(clgHeat)}%)`}else{document.getElementById('clgStatus').innerHTML=`CLG: <span style="color:#00ffaa;">READY</span>`;clgBtn.textContent='CLG GRID'}clgBtn.disabled=!playing;clgBtn.style.color='#0f0';clgBtn.style.borderColor='#0f0'}
     const ttuBtn=document.getElementById('ttuBtn');if(ttuActive){const s=Math.ceil((TTU_DURATION_MS-(now-ttuLastFiredTs))/1000);document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#00ffff;font-weight:bold;">UPLINK ACTIVE (${s}s)</span>`;ttuBtn.disabled=true}else if(!ttuReady){const s=Math.ceil((TTU_COOLDOWN_MS-(now-ttuLastFiredTs))/1000);document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`;ttuBtn.disabled=true}else{document.getElementById('ttuStatus').innerHTML=`TTU: <span style="color:#00ffaa;font-weight:bold;">READY</span>`;ttuBtn.textContent='TTU LINK';ttuBtn.disabled=!playing}if(orsRemain>0){document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#ffcc00;font-weight:bold;">DISRUPTION (${orsRemain}s)</span>`}else if(!orsReady){const s=Math.ceil((ORS_COOLDOWN_MS-(now-orsLastFiredTs))/1000);document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#ffcc00;">COOLDOWN (${s}s)</span>`}else{document.getElementById('orsStatus').innerHTML=`ORS: <span style="color:#00ffaa;font-weight:bold;">READY</span>`}document.getElementById('orsBtn').disabled=!playing||orsRemain>0||!orsReady;updateRoadrunnerStatus();let effSpeed=ROADRUNNER_BASE_SPEED;if(clgStatus==='ACTIVE')effSpeed*=0.5;
+    const furyBtn=document.getElementById('furyBtn');if(!furyReady){let s=Math.ceil((FURY_COOLDOWN_MS-(now-furyLastFiredTs))/1000);if(s<=0){furyReady=true;document.getElementById('furyStatus').innerHTML=`Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;furyBtn.textContent="FURY AIR SUPPORT";furyBtn.disabled=!playing;speak('Air support refueling complete. Fury squadron on standby.',1);addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Refueled and Ready.')}else{document.getElementById('furyStatus').innerHTML=`Air Support: <span style="color:#ffcc00;">REFUELING (${s}s)</span>`;furyBtn.textContent=`FURY (${s}s)`;furyBtn.disabled=true}}else{document.getElementById('furyStatus').innerHTML=`Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;furyBtn.textContent="FURY AIR SUPPORT";furyBtn.disabled=!playing}
+    const jamBtn=document.getElementById('jamBtn');jamBtn.disabled=!playing;
+    if(furySquad.length>0){enemies.forEach(e=>{if(!e.identified)e.identified=true})}
+    const activeDefenders=friends.filter(f=>f.id!==0&&f.logisticsState==='ACTIVE').length;const enemyCount=enemies.filter(e=>e.alive).length;if(activeDefenders===0&&enemyCount>0){const readyToScramble=friends.filter(f=>f.id!==0&&f.logisticsState==='RESUPPLY'&&f.fuel>10&&f.missiles>=1);if(readyToScramble.length>0){readyToScramble.forEach(f=>{f.logisticsState='ACTIVE'});speak('Emergency scramble initiated. Launching available assets.',1);addKill('<span style="color:#ff00ff;font-weight:bold;">ALERT:</span> PANIC LAUNCH! Assets Scrambled Early.')}}
+    friends.filter(f=>f.id!==0).forEach(f=>{if(f.logisticsState==='ACTIVE'){f.fuel-=FUEL_BURN_RATE;if(f.fuel<0)f.fuel=0;if(f.fuel<=0||f.missiles<=0){f.logisticsState='RTB';enemies.forEach(e=>{if(e.engagedBy===f.id)e.engagedBy=undefined})}}else if(f.logisticsState==='RESUPPLY'){f.fuel=Math.min(f.fuel+REFUEL_RATE,MAX_FUEL);f.missiles=Math.min(f.missiles+RELOAD_RATE,MAX_MISSILES);if(f.fuel>=MAX_FUEL&&f.missiles>=MAX_MISSILES){f.logisticsState='ACTIVE'}}let closest=Infinity;let target=null;if(f.logisticsState==='RTB'){const distToBase=Math.hypot(base.lng-f.lng,base.lat-f.lat);if(distToBase<0.001||distToBase<(f.speed*3.5)){f.logisticsState='RESUPPLY';f.lng=base.lng;f.lat=base.lat}else{const a=Math.atan2(base.lat-f.lat,base.lng-f.lng);f.lng+=Math.cos(a)*(f.speed*3.0);f.lat+=Math.sin(a)*(f.speed*3.0);f.bearing=(a*180/Math.PI)-90}}else if(f.logisticsState==='RESUPPLY'){f.lng=base.lng;f.lat=base.lat}else{enemies.forEach(e=>{if(e.alive){const d=Math.hypot(e.lng-f.lng,e.lat-f.lat);if(!e.identified&&d<ID_RANGE){e.identified=true}if(e.engagedBy===undefined||(ttuActive&&e.engagedBy!==f.id)){if(e.identified||d<0.003){const ed=e.isSwarmUnit?d*0.5:e.isLoitererUnit?d*1.5:d;if(ed<closest){closest=ed;target=e}}}}});if(target){if(ttuActive&&target.engagedBy===undefined)target.engagedBy=f.id;const a=Math.atan2(target.lat-f.lat,target.lng-f.lng);f.lng+=Math.cos(a)*effSpeed;f.lat+=Math.sin(a)*effSpeed;f.bearing=(a*180/Math.PI)-90;const chance=ttuActive?0.12:0.08;if(Math.random()<chance)fireProjectile(f,target)}else if(!isRegrouping){f.bearing+=2}}});
+    furySquad.forEach(jet=>{jet.lat+=jet.vy;jet.lng+=jet.vx;if(Math.random()<0.50&&jet.ammo>0){const targets=enemies.filter(e=>e.alive&&Math.hypot(e.lng-jet.lng,e.lat-jet.lat)<FURY_ENGAGE_RANGE&&!furyMissiles.some(m=>m.targetId===e.id));if(targets.length>0){const t=targets.sort((a,b)=>Math.hypot(a.lng-jet.lng,a.lat-jet.lat)-Math.hypot(b.lng-jet.lng,b.lat-jet.lat))[0];if(t){jet.ammo--;furyMissiles.push({lat:jet.lat,lng:jet.lng,targetId:t.id,speed:MISSILE_SPEED});if(Math.random()<0.3)speak("Fox Two",1)}}}});
+    furySquad=furySquad.filter(j=>j.lat<base.lat+0.08);
+    furyMissiles=furyMissiles.filter(m=>{const t=enemies.find(e=>e.id===m.targetId);if(!t||!t.alive){m.lat+=0.005;return false}const distToTarget=Math.hypot(t.lng-m.lng,t.lat-m.lat);if(distToTarget<m.speed*1.5){t.alive=false;totalKills++;spawnExplosion(t.lat,t.lng,t.isSwarmUnit);addKill(`<span style="color:#00ffff;">FURY SQUAD:</span> Target Eliminated (Sidewinder).`);return false}const angle=Math.atan2(t.lat-m.lat,t.lng-m.lng);m.lng+=Math.cos(angle)*m.speed;m.lat+=Math.sin(angle)*m.speed;return true});
+    if(clgStatus==='ACTIVE'){enemies.filter(e=>e.alive).forEach(e=>{const d=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(d<CLG_RANGE&&!e.isSwarmUnit){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Laser perimeter breached and sanitized.',1);addKill(`<span style="color:#ff00ff;">CLG PURGE:</span> ${e.type} eliminated (Laser Defense.)`)}})}
+    const pktChance=ttuActive?TTU_PACKET_HIT_CHANCE:0.35;projectiles=projectiles.filter(p=>{p.lng+=p.vx;p.lat+=p.vy;let hit=false;if(p.isEMP){const d=Math.hypot(p.lng-base.lng,p.lat-base.lat);if(d<p.detonationRange){hit=true;enemies.forEach(e=>{const ed=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(e.alive&&ed<EMP_KILL_RANGE){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit,true);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Area denial successful. Scanning for residual threats.',1);addKill(`<span style="color:#00ffff;">EMP SPLASH:</span> ${e.type} eliminated (Area Denial).`)}});return false}}else{enemies.forEach(e=>{if(e.alive&&Math.hypot(e.lng-p.lng,e.lat-p.lat)<0.0035){const isPkt=e.isSwarmUnit;if(!isPkt||Math.random()<pktChance){e.alive=false;e.engagedBy=undefined;hit=true;totalKills++;const f=friends.find(x=>x.id===p.firerId);if(f){const msg=isPkt?`SPLASH — PACKET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`:`SPLASH — TARGET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`;if(!e.isKillStreakProcessed){const now=Date.now();const prev=f.currentStreak;if(now-f.lastKillTs<STREAK_WINDOW_MS)f.currentStreak++;else f.currentStreak=1;f.lastKillTs=now;highestStreak=friends.reduce((m,x)=>Math.max(m,x.currentStreak),0);spawnExplosion(e.lat,e.lng,isPkt);const suffix=f.currentStreak>1?` (Streak: ${f.currentStreak})`:'';addKill(msg+suffix);if(f.currentStreak>sessionHighStreak)sessionHighStreak=f.currentStreak;setTimeout(()=>{if(!isTelemetryActive&&!ttuActive)speak('Splash one',1);setTimeout(()=>checkKillStreakVoice(f,prev),2200)},1500);e.isKillStreakProcessed=true}}else addKill('SPLASH — TARGET DESTROYED (UNKNOWN ASSET)')}}})}return!hit});
+    projectiles=projectiles.filter(p=>{if(Math.hypot(p.lng-base.lng,p.lat-base.lat)>0.25)return false;return true});
+    const nowE=Date.now();explosions=explosions.filter(e=>{const t=(nowE-e.startTime)/e.duration;if(t>=1)return false;const r=e.isBigEMP?100:(e.isSwarmUnit?25:40*(1-(1-t)**4));e.radius=r;e.opacity=1-t;e.color=e.isBigEMP?'#00ffff':(e.isSwarmUnit?'#ffff00':'#ff9900');return true});enemies.forEach(e=>{if(e.alive){const a=Math.atan2(base.lat-e.lat,base.lng-e.lng);e.lng+=Math.cos(a)*e.speed*enemySpeedMul;e.lat+=Math.sin(a)*e.speed*enemySpeedMul}});enemies=enemies.filter(e=>{if(e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<baseThreshold){e.alive=false;e.isKillStreakProcessed=false;flashBaseHit();if(!isTelemetryActive&&!ttuActive)speak('Breach! Loss of asset',1);friends.forEach(f=>{f.currentStreak=0;f.lastKillTs=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);lastStreakSpokenTs=0;lastKillFeedLogTs=0;const msg=e.isSwarmUnit?'<span style="color:#f00;font-weight:bold;">PACKET BREACH!</span> - Critical Infrastructure Hit!':e.isLoitererUnit?'<span style="color:#f00;font-weight:bold;">LOITERER BREACH!</span> - Critical Infrastructure Hit!':'<span style="color:#f00;font-weight:bold;">BASE BREACH!</span> - Roadrunner Lost!';if(!e.isSwarmUnit&&!e.isLoitererUnit){const avail=friends.filter(f=>f.id!==0);if(avail.length>0){const v=avail[Math.floor(Math.random()*avail.length)];v.id=0;addKill(`${msg} (${v.name} Destroyed)`)}else addKill(msg);roadrunnerLosses++}else addKill(msg);return false}return e.alive});
+    const op=friends.filter(f=>f.id!==0).length;const alive=enemies.filter(e=>e.alive).length;
+    if(op===0&&playing){if(waveTimer)clearTimeout(waveTimer);if(telemetryInterval)clearInterval(telemetryInterval);if(resumeInterval)clearInterval(resumeInterval);if(recommendationInterval)clearInterval(recommendationInterval);playing=false;isUpdating=false;showGameOver()}else if(alive===0&&playing){if(waveNumber>1){if(!isTelemetryActive&&!ttuActive&&(now-lastAllClearVoiceTs)>30000){speak('All threats eliminated. Assets regrouping for resupply.',1);lastAllClearVoiceTs=now}if(!waveTimer){isRegrouping=true;waveTimer=setTimeout(spawnWave,35000);addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Mission Loiter Initiated. Assets Regrouping.')}}};
     
-    // FURY BUTTON WITH FAILSAFE
-    const furyBtn = document.getElementById('furyBtn');
-    if(!furyReady){
-        let s = Math.ceil((FURY_COOLDOWN_MS - (now - furyLastFiredTs))/1000);
-        
-        // FAILSAFE: If timer is negative or 0, force ready immediately
-        if (s <= 0) {
-            furyReady = true;
-            // Force reset immediately visually
-            document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;
-            furyBtn.textContent = "FURY AIR SUPPORT";
-            furyBtn.disabled = !playing;
-            speak('Air support refueling complete. Fury squadron on standby.', 1);
-            addKill('<span style="color:#00ffff;font-weight:bold;">AIR SUPPORT:</span> Refueled and Ready.');
-        } else {
-            // Normal cooldown display
-            document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#ffcc00;">REFUELING (${s}s)</span>`;
-            furyBtn.textContent = `FURY (${s}s)`;
-            furyBtn.disabled = true;
-        }
-    } else {
-        document.getElementById('furyStatus').innerHTML = `Air Support: <span style="color:#00ffff;font-weight:bold;">ON STATION</span>`;
-        furyBtn.textContent = "FURY AIR SUPPORT";
-        furyBtn.disabled = !playing;
-    }
-    
-    // JAMMING BUTTON UPDATE
-    const jamBtn = document.getElementById('jamBtn');
-    jamBtn.disabled = !playing;
-
-    // --- DATA LINK: Global Threat ID ---
-    if(furySquad.length > 0) {
-        enemies.forEach(e => {
-            if(!e.identified) e.identified = true; 
-        });
-    }
-
-    // --- PANIC LAUNCH LOGIC ---
-    // Count active defenders (not dead, not RTB/RESUPPLY)
-    const activeDefenders = friends.filter(f => f.id !== 0 && f.logisticsState === 'ACTIVE').length;
-    const enemyCount = enemies.filter(e => e.alive).length;
-
-    if (activeDefenders === 0 && enemyCount > 0) {
-        // Find defenders who are currently resupplying but have enough resources to fight
-        const readyToScramble = friends.filter(f => 
-            f.id !== 0 && 
-            f.logisticsState === 'RESUPPLY' && 
-            f.fuel > 10 && // At least 10% fuel
-            f.missiles >= 1 // At least 1 missile
-        );
-
-        if (readyToScramble.length > 0) {
-            readyToScramble.forEach(f => {
-                f.logisticsState = 'ACTIVE';
-            });
-            speak('Emergency scramble initiated. Launching available assets.', 1);
-            addKill('<span style="color:#ff00ff;font-weight:bold;">ALERT:</span> PANIC LAUNCH! Assets Scrambled Early.');
-        }
-    }
-
-    friends.filter(f=>f.id!==0).forEach(f=>{
-        
-        if(f.logisticsState === 'ACTIVE') {
-            f.fuel -= FUEL_BURN_RATE;
-            // FIX: Clamp fuel so it doesn't go negative in logic
-            if(f.fuel < 0) f.fuel = 0;
-            
-            if(f.fuel <= 0 || f.missiles <= 0) {
-                f.logisticsState = 'RTB';
-                enemies.forEach(e => { if(e.engagedBy === f.id) e.engagedBy = undefined; });
-            }
-        } else if(f.logisticsState === 'RESUPPLY') {
-            f.fuel = Math.min(f.fuel + REFUEL_RATE, MAX_FUEL);
-            f.missiles = Math.min(f.missiles + RELOAD_RATE, MAX_MISSILES);
-            if(f.fuel >= MAX_FUEL && f.missiles >= MAX_MISSILES) {
-                f.logisticsState = 'ACTIVE';
-            }
-        }
-
-        let closest=Infinity;
-        let target=null;
-
-        if(f.logisticsState === 'RTB') {
-            const distToBase = Math.hypot(base.lng - f.lng, base.lat - f.lat);
-            
-            // --- FIX FOR GLITCHING RTB (Added 'Arresting Gear' Snap) ---
-            // If very close OR if inside the "overshoot" range of the high speed, SNAP to center.
-            if(distToBase < 0.001 || distToBase < (f.speed * 3.5)) {
-                f.logisticsState = 'RESUPPLY';
-                f.lng = base.lng; // SNAP
-                f.lat = base.lat; // SNAP
-            } else {
-                const a = Math.atan2(base.lat - f.lat, base.lng - f.lng);
-                f.lng += Math.cos(a) * (f.speed * 3.0);  // RTB SPEED BOOST (3x)
-                f.lat += Math.sin(a) * (f.speed * 3.0);
-                f.bearing = (a * 180 / Math.PI) - 90; 
-            }
-        } 
-        else if(f.logisticsState === 'RESUPPLY') {
-             // Stay put
-             f.lng = base.lng;
-             f.lat = base.lat;
-        }
-        else {
-            enemies.forEach(e=>{
-                if(e.alive){
-                    const d=Math.hypot(e.lng-f.lng,e.lat-f.lat);
-                    if(!e.identified && d < ID_RANGE){e.identified = true;}
-                    if(e.engagedBy===undefined||(ttuActive&&e.engagedBy!==f.id)){
-                        if(e.identified || d < 0.003){ 
-                            const ed=e.isSwarmUnit?d*0.5:e.isLoitererUnit?d*1.5:d;
-                            if(ed<closest){closest=ed;target=e}
-                        }
-                    }
-                }
-            });
-
-            if(target){
-                if(ttuActive&&target.engagedBy===undefined)target.engagedBy=f.id;
-                const a=Math.atan2(target.lat-f.lat,target.lng-f.lng);
-                f.lng+=Math.cos(a)*effSpeed;
-                f.lat+=Math.sin(a)*effSpeed;
-                f.bearing = (a * 180 / Math.PI) - 90; 
-                const chance=ttuActive?0.12:0.08;
-                if(Math.random()<chance)fireProjectile(f,target)
-            } else if(!isRegrouping) {
-                f.bearing += 2; 
-            }
-        }
-    });
-
-    furySquad.forEach(jet => {
-        jet.lat += jet.vy;
-        jet.lng += jet.vx;
-        
-        // RIPPLE FIRE LOGIC: Only fire if target isn't already claimed by another Fury missile
-        if(Math.random() < 0.50 && jet.ammo > 0){
-            // Filter targets: Alive, In Range, NOT already targeted by a missile
-            const targets = enemies.filter(e => 
-                e.alive && 
-                Math.hypot(e.lng-jet.lng, e.lat-jet.lat) < FURY_ENGAGE_RANGE &&
-                !furyMissiles.some(m => m.targetId === e.id)
-            ); 
-            
-            if(targets.length > 0){
-                // Sort by closeness
-                const t = targets.sort((a,b) => Math.hypot(a.lng-jet.lng, a.lat-jet.lat) - Math.hypot(b.lng-jet.lng, b.lat-jet.lat))[0];
-                if(t){ 
-                    jet.ammo--; 
-                    furyMissiles.push({
-                        lat: jet.lat, lng: jet.lng,
-                        targetId: t.id,
-                        speed: MISSILE_SPEED
-                    });
-                    if(Math.random() < 0.3) speak("Fox Two", 1);
-                }
-            }
-        }
-    });
-    // Despawn further North
-    furySquad = furySquad.filter(j => j.lat < base.lat + 0.08);
-
-    furyMissiles = furyMissiles.filter(m => {
-        const t = enemies.find(e => e.id === m.targetId);
-        if(!t || !t.alive){
-            m.lat += 0.005; 
-            return false; 
-        }
-        
-        const distToTarget = Math.hypot(t.lng - m.lng, t.lat - m.lat);
-        
-        // --- FURY SNAP LOGIC FIX (No Circling) ---
-        // If within 1.5x speed frame, just snap to it and kill
-        if(distToTarget < m.speed * 1.5) {
-             t.alive = false;
-             totalKills++;
-             spawnExplosion(t.lat, t.lng, t.isSwarmUnit);
-             addKill(`<span style="color:#00ffff;">FURY SQUAD:</span> Target Eliminated (Sidewinder).`);
-             return false;
-        }
-
-        const angle = Math.atan2(t.lat - m.lat, t.lng - m.lng);
-        m.lng += Math.cos(angle) * m.speed;
-        m.lat += Math.sin(angle) * m.speed;
-        
-        return true;
-    });
-
-    if(clgStatus==='ACTIVE'){enemies.filter(e=>e.alive).forEach(e=>{const d=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(d<CLG_RANGE&&!e.isSwarmUnit){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Laser perimeter breached and sanitized.',1);addKill(`<span style="color:#ff00ff;">CLG PURGE:</span> ${e.type} eliminated (Laser Defense).`)}})}const pktChance=ttuActive?TTU_PACKET_HIT_CHANCE:0.35;projectiles=projectiles.filter(p=>{p.lng+=p.vx;p.lat+=p.vy;let hit=false;if(p.isEMP){const d=Math.hypot(p.lng-base.lng,p.lat-base.lat);if(d<p.detonationRange){hit=true;enemies.forEach(e=>{const ed=Math.hypot(e.lng-base.lng,e.lat-base.lat);if(e.alive&&ed<EMP_KILL_RANGE){e.alive=false;e.engagedBy=undefined;e.isKillStreakProcessed=true;totalKills++;spawnExplosion(e.lat,e.lng,e.isSwarmUnit, true);friends.forEach(f=>{f.currentStreak=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);speak('Area denial successful. Scanning for residual threats.',1);addKill(`<span style="color:#00ffff;">EMP SPLASH:</span> ${e.type} eliminated (Area Denial).`)}});return false}}else{enemies.forEach(e=>{if(e.alive&&Math.hypot(e.lng-p.lng,e.lat-p.lat)<0.0035){const isPkt=e.isSwarmUnit;if(!isPkt||Math.random()<pktChance){e.alive=false;e.engagedBy=undefined;hit=true;totalKills++;const f=friends.find(x=>x.id===p.firerId);if(f){const msg=isPkt?`SPLASH — PACKET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`:`SPLASH — TARGET DESTROYED <span style="color:#00ffaa;">(${f.name})</span>`;if(!e.isKillStreakProcessed){const now=Date.now();const prev=f.currentStreak;if(now-f.lastKillTs<STREAK_WINDOW_MS)f.currentStreak++;else f.currentStreak=1;f.lastKillTs=now;highestStreak=friends.reduce((m,x)=>Math.max(m,x.currentStreak),0);spawnExplosion(e.lat,e.lng,isPkt);const suffix=f.currentStreak>1?` (Streak: ${f.currentStreak})`:'';addKill(msg+suffix);
-        // FIX: Update HIGH SCORE here immediately
-        if(f.currentStreak > sessionHighStreak) sessionHighStreak = f.currentStreak;
-        
-        setTimeout(()=>{if(!isTelemetryActive&&!ttuActive)speak('Splash one',1);setTimeout(()=>checkKillStreakVoice(f,prev),2200)},1500);e.isKillStreakProcessed=true}}else addKill('SPLASH — TARGET DESTROYED (UNKNOWN ASSET)')}}})}return!hit});
-    
-    // --- UPDATED MISSILE CLEANUP RANGE ---
-    projectiles = projectiles.filter(p => {
-        // Remove if too far (INCREASED FROM 0.05 to 0.25)
-        if(Math.hypot(p.lng - base.lng, p.lat - base.lat) > 0.25) return false;
-        return true;
-    });
-
-    const nowE=Date.now();explosions=explosions.filter(e=>{const t=(nowE-e.startTime)/e.duration;if(t>=1)return false;const r=e.isBigEMP ? 100 : (e.isSwarmUnit?25:40*(1-(1-t)**4));e.radius=r;e.opacity=1-t;e.color=e.isBigEMP?'#00ffff':(e.isSwarmUnit?'#ffff00':'#ff9900');return true});enemies.forEach(e=>{if(e.alive){const a=Math.atan2(base.lat-e.lat,base.lng-e.lng);e.lng+=Math.cos(a)*e.speed*enemySpeedMul;e.lat+=Math.sin(a)*e.speed*enemySpeedMul}});enemies=enemies.filter(e=>{if(e.alive&&Math.hypot(e.lng-base.lng,e.lat-base.lat)<baseThreshold){e.alive=false;e.isKillStreakProcessed=false;flashBaseHit();if(!isTelemetryActive&&!ttuActive)speak('Breach! Loss of asset',1);friends.forEach(f=>{f.currentStreak=0;f.lastKillTs=0});highestStreak=friends.reduce((m,f)=>Math.max(m,f.currentStreak),0);lastStreakSpokenTs=0;lastKillFeedLogTs=0;const msg=e.isSwarmUnit?'<span style="color:#f00;font-weight:bold;">PACKET BREACH!</span> - Critical Infrastructure Hit!':e.isLoitererUnit?'<span style="color:#f00;font-weight:bold;">LOITERER BREACH!</span> - Critical Infrastructure Hit!':'<span style="color:#f00;font-weight:bold;">BASE BREACH!</span> - Roadrunner Lost!';if(!e.isSwarmUnit&&!e.isLoitererUnit){const avail=friends.filter(f=>f.id!==0);if(avail.length>0){const v=avail[Math.floor(Math.random()*avail.length)];v.id=0;addKill(`${msg} (${v.name} Destroyed)`)}else addKill(msg);roadrunnerLosses++}else addKill(msg);return false}return e.alive});const op=friends.filter(f=>f.id!==0).length;const alive=enemies.filter(e=>e.alive).length;
-    
-    // --- GAME OVER LOGIC CALL ---
-    if(op===0 && playing){
-        if(waveTimer)clearTimeout(waveTimer);
-        if(telemetryInterval)clearInterval(telemetryInterval);
-        if(resumeInterval)clearInterval(resumeInterval);
-        if(recommendationInterval)clearInterval(recommendationInterval);
-        playing=false;
-        isUpdating=false;
-        showGameOver(); // CALL THE NEW MODAL
-    } else if(alive===0&&playing){
-        if(waveNumber>1){
-            if(!isTelemetryActive&&!ttuActive&&(now-lastAllClearVoiceTs)>30000){
-                speak('All threats eliminated. Assets regrouping for resupply.',1);
-                lastAllClearVoiceTs=now
-            }
-            if(!waveTimer){
-                isRegrouping = true;
-                waveTimer=setTimeout(spawnWave,35000);
-                addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Mission Loiter Initiated. Assets Regrouping.')
-            }
-        }
-    };refresh()}
+    // Update stats bar every tick
+    updateStatsBar();
+    refresh()}
     
     function refresh(){
         if(!map.getSource('friends')) return;
-        
         map.getSource('friends')?.setData({type:'FeatureCollection',features:friends.filter(f=>f.id!==0).map(f=>({type:'Feature',geometry:{type:'Point',coordinates:[f.lng,f.lat]},properties:{name:f.name}}))});
-        
-        const headingFeatures = friends.filter(f=>f.id!==0).map(f => {
-            const len = 0.0005; // Length of heading indicator
-            const rad = (f.bearing + 90) * (Math.PI / 180);
-            return { type: 'Feature', geometry: { type: 'LineString', coordinates: [ [f.lng, f.lat], [f.lng + Math.cos(rad)*len, f.lat + Math.sin(rad)*len] ] } };
-        });
-        if(!map.getSource('friend-headings')){ map.addSource('friend-headings', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } }); map.addLayer({ id: 'heading-layer', type: 'line', source: 'friend-headings', paint: { 'line-color': '#00ffaa', 'line-width': 2, 'line-opacity': 0.7 } }); }
-        map.getSource('friend-headings')?.setData({type: 'FeatureCollection', features: headingFeatures});
-
-        map.getSource('enemies')?.setData({type:'FeatureCollection',features:enemies.filter(e=>e.alive).map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[e.lng,e.lat]},properties:{alive:e.alive,isSwarmUnit:e.isSwarmUnit,isLoitererUnit:e.isLoitererUnit, identified: e.identified}}))});
-        
+        const headingFeatures=friends.filter(f=>f.id!==0).map(f=>{const len=0.0005;const rad=(f.bearing+90)*(Math.PI/180);return{type:'Feature',geometry:{type:'LineString',coordinates:[[f.lng,f.lat],[f.lng+Math.cos(rad)*len,f.lat+Math.sin(rad)*len]]}}});
+        if(!map.getSource('friend-headings')){map.addSource('friend-headings',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'heading-layer',type:'line',source:'friend-headings',paint:{'line-color':'#00ffaa','line-width':2,'line-opacity':0.7}})}
+        map.getSource('friend-headings')?.setData({type:'FeatureCollection',features:headingFeatures});
+        map.getSource('enemies')?.setData({type:'FeatureCollection',features:enemies.filter(e=>e.alive).map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[e.lng,e.lat]},properties:{alive:e.alive,isSwarmUnit:e.isSwarmUnit,isLoitererUnit:e.isLoitererUnit,identified:e.identified}}))});
         map.getSource('projectiles')?.setData({type:'FeatureCollection',features:projectiles.map(p=>({type:'Feature',geometry:{type:'Point',coordinates:[p.lng,p.lat]},properties:{isAntiPacket:p.isAntiPacket,isEMP:p.isEMP}}))});
-        
-        // --- DRAW TRACER TAILS ---
-        const missileTrails = projectiles.filter(p => !p.isEMP).map(p => {
-            // REDUCED TAIL LENGTH TO 1 (Was 3)
-            const tailLen = 1;
-            const tailLng = p.lng - (p.vx * tailLen);
-            const tailLat = p.lat - (p.vy * tailLen);
-            return {
-                type: 'Feature', geometry: { type: 'LineString', coordinates: [[tailLng, tailLat], [p.lng, p.lat]] }
-            };
-        });
+        const missileTrails=projectiles.filter(p=>!p.isEMP).map(p=>{const tailLen=1;const tailLng=p.lng-(p.vx*tailLen);const tailLat=p.lat-(p.vy*tailLen);return{type:'Feature',geometry:{type:'LineString',coordinates:[[tailLng,tailLat],[p.lng,p.lat]]}}});
         map.getSource('missile-trails')?.setData({type:'FeatureCollection',features:missileTrails});
-
-
         map.getSource('fury-jets')?.setData({type:'FeatureCollection',features:furySquad.map(j=>({type:'Feature',geometry:{type:'Point',coordinates:[j.lng,j.lat]},properties:{id:j.id}}))});
         map.getSource('fury-missiles')?.setData({type:'FeatureCollection',features:furyMissiles.map(m=>({type:'Feature',geometry:{type:'Point',coordinates:[m.lng,m.lat]}}))});
         map.getSource('explosions')?.setData({type:'FeatureCollection',features:explosions.map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[e.lng,e.lat]},properties:{radius:e.radius,color:e.color,opacity:e.opacity}}))})
     }
     
-    function initializeAudioAndGame(){isFirstStart=false;playing=true;const intro="Starfighter, you have been recruited by the Star League to defend the frontier against Zur and the Codann armada. Victory or death. Good luck Starfighter.";speechSynthesis.speak(new SpeechSynthesisUtterance(intro));if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();music.play().catch(()=>{addKill('<span style="color:#ffcc00;font-weight:bold;">WARNING:</span> Browser blocked audio. Click SKIP to retry music playback.')});document.getElementById('pauseBtn').textContent='PAUSE';isUpdating=true;setTimeout(()=>{spawnWave();telemetryInterval=setInterval(readTelemetry,120000);resumeInterval=setInterval(simulateResume,600000);recommendationInterval=setInterval(recommendSystem,1000);addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Tactical Command Node Engaged. Assets Deployed. Wave 1 Initiated.')},15000)}
+    function initializeAudioAndGame(){isFirstStart=false;playing=true;const intro="Starfighter, you have been recruited by the Star League to defend the frontier against Zur and the Codann armada. Victory or death. Good luck Starfighter.";speechSynthesis.speak(new SpeechSynthesisUtterance(intro));if(shuffledPlaylist.length===0)startPlaylist();currentSongIndex=(currentSongIndex+1)%shuffledPlaylist.length;music.src=shuffledPlaylist[currentSongIndex];displaySongInfo();music.load();music.play().catch(()=>{addKill('<span style="color:#ffcc00;font-weight:bold;">AUDIO:</span> Click SKIP SONG to enable audio (browser policy).')});document.getElementById('pauseBtn').textContent='PAUSE';isUpdating=true;setTimeout(()=>{spawnWave();telemetryInterval=setInterval(readTelemetry,120000);resumeInterval=setInterval(simulateResume,600000);recommendationInterval=setInterval(recommendSystem,1000);addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Tactical Command Node Engaged. Assets Deployed. Wave 1 Initiated.')},15000)}
     
-    // --- FIXED PAUSE/RESUME HANDLER ---
     function handlePauseResume(){
         const btn=document.getElementById('pauseBtn');
         const gameOver=friends.filter(f=>f.id!==0).length===0&&roadrunnerLosses>0;
-        
-        if(gameOver){
-            playing=false;
-            btn.textContent='START SYSTEM';
-            music.pause();
-            init();
-            return;
-        }
-        
-        if(isFirstStart){
-            initializeAudioAndGame();
-            return;
-        }
-        
+        if(gameOver){playing=false;btn.textContent='START SYSTEM';music.pause();init();return}
+        if(isFirstStart){initializeAudioAndGame();return}
         playing=!playing;
-        
         if(playing){
-            // RESUME LOGIC
             btn.textContent='PAUSE';
             speechSynthesis.cancel();
             isUpdating=true;
-            
-            // FIX: Check if null before restarting
-            if(!telemetryInterval) telemetryInterval=setInterval(readTelemetry,120000);
-            if(!resumeInterval) resumeInterval=setInterval(simulateResume,600000);
-            if(!recommendationInterval) recommendationInterval=setInterval(recommendSystem,1000);
-            
-            // CRITICAL FIX FOR RESTART SPAWN: If playing but no wave scheduled and no enemies, start now.
-            if(!waveTimer && enemies.filter(e => e.alive).length === 0){
-                 const delay = (waveNumber === 1) ? 3000 : 35000;
-                 waveTimer=setTimeout(spawnWave, delay);
-            }
+            if(!telemetryInterval)telemetryInterval=setInterval(readTelemetry,120000);
+            if(!resumeInterval)resumeInterval=setInterval(simulateResume,600000);
+            if(!recommendationInterval)recommendationInterval=setInterval(recommendSystem,1000);
+            // BUG FIX #2: Restart wave timer on resume only if no enemies present
+            if(!waveTimer&&enemies.filter(e=>e.alive).length===0){const delay=(waveNumber===1)?3000:35000;waveTimer=setTimeout(spawnWave,delay)}
             music.play().catch(()=>{});
             addKill('<span style="color:#00ffaa;font-weight:bold;">SYSTEM:</span> Resumed.');
-        } else {
-            // PAUSE LOGIC
+        }else{
             btn.textContent='RESUME';
             music.pause();
             isUpdating=false;
             speechSynthesis.cancel();
-            
-            if(waveTimer) clearTimeout(waveTimer);
-            
-            // CRITICAL FIX: Clear AND set to null
-            if(telemetryInterval) { clearInterval(telemetryInterval); telemetryInterval = null; }
-            if(resumeInterval) { clearInterval(resumeInterval); resumeInterval = null; }
-            if(recommendationInterval) { clearInterval(recommendationInterval); recommendationInterval = null; }
-            
-            // THE FIX FOR GHOST TIMERS ON RESUME
-            waveTimer = null; 
-
+            if(waveTimer)clearTimeout(waveTimer);
+            // BUG FIX #2: Null out all intervals so they can't stack on resume
+            if(telemetryInterval){clearInterval(telemetryInterval);telemetryInterval=null}
+            if(resumeInterval){clearInterval(resumeInterval);resumeInterval=null}
+            if(recommendationInterval){clearInterval(recommendationInterval);recommendationInterval=null}
+            waveTimer=null;
             document.getElementById('recommendationText').textContent='SYSTEM PAUSED.';
             addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> Tactical Pause Initiated.');
         }
     }
     
-    // SAFETY: Use existing Reset logic for reboot
-    document.getElementById('rebootBtn').onclick = () => {
-        document.getElementById('resetBtn').click();
-    };
-
+    document.getElementById('rebootBtn').onclick=()=>{document.getElementById('resetBtn').click()};
     document.getElementById('pauseBtn').addEventListener('click',handlePauseResume);
-    document.getElementById('resetBtn').onclick=()=>{
-        playing=false;
-        document.getElementById('pauseBtn').textContent='START SYSTEM';
-        music.pause();
-        music.currentTime = 0;
-        speechSynthesis.cancel();
-        document.getElementById('gameOverScreen').style.display = 'none';
-        init();
-        refresh(); // Instant wipe
-        addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> RESET COMPLETE. Awaiting Start.');
-    };
-    document.getElementById('skipBtn').onclick=()=>{if(playing&&!ttuActive){music.pause();playNextSong()}else if(!playing){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Cannot skip. System is PAUSED.</span><br>`)}else if(ttuActive){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Music silenced during TTU Uplink.</span><br>`)}};document.getElementById('empBtn').onclick=fireEMPInterdiction;document.getElementById('clgBtn').onclick=toggleCLG;document.getElementById('ttuBtn').onclick=activateTTU;document.getElementById('orsBtn').onclick=activateORS;
-    document.getElementById('furyBtn').onclick = launchFurySquad;
+    document.getElementById('resetBtn').onclick=()=>{playing=false;document.getElementById('pauseBtn').textContent='START SYSTEM';music.pause();music.currentTime=0;speechSynthesis.cancel();document.getElementById('gameOverScreen').style.display='none';init();refresh();addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> RESET COMPLETE. Awaiting Start.')};
+    document.getElementById('skipBtn').onclick=()=>{if(playing&&!ttuActive){music.pause();playNextSong()}else if(!playing){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Cannot skip. System is PAUSED.</span><br>`)}else if(ttuActive){const t=new Date().toLocaleTimeString([],[{hour:'2-digit',minute:'2-digit',second:'2-digit'}]);addKill(`<span style="color:#0f0">[${t}]</span> <span style="color:#ffcc00;">ALERT: Music silenced during TTU Uplink.</span><br>`)}};
+    document.getElementById('empBtn').onclick=fireEMPInterdiction;
+    document.getElementById('clgBtn').onclick=toggleCLG;
+    document.getElementById('ttuBtn').onclick=activateTTU;
+    document.getElementById('orsBtn').onclick=activateORS;
+    document.getElementById('furyBtn').onclick=launchFurySquad;
 
     init();
     setInterval(update,250);
