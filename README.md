@@ -32,7 +32,7 @@ The simulation models a "Common Operating Picture" (COP) where threat data is sh
 * **Audio:** HTML5 Audio API for situational awareness cues.
 
 ### 4. About the Author
-I am a Field Operator and Logistician based in the High Desert (AVTA). I taught myself to code to better understand the systems I aim to deploy. 
+I am a Field Operator and Logistician based in the High Desert (AV). I taught myself to code to better understand the systems I aim to deploy. 
 
 I believe that for autonomous systems to scale effectively, we need operators who understand both the **hardware limitations** in the field and the **software logic** running on the edge.
 
