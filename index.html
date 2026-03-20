@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LATTICERUNNER // 21.11</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="map"></div>
+<div id="jamOverlay"></div>
+<div id="wave">WAVE <span id="wn">1</span> INCOMING</div>
+<div id="baseHit" class="base-hit"></div>
+
+<!-- ============================================================
+     INTRO SPLASH
+     ============================================================ -->
+<div id="introSplash">
+    <h1>LATTICERUNNER</h1>
+    <div class="sub">AUTONOMOUS NETWORKED DEFENSE SIMULATION // v21.11</div>
+    <div class="desc">
+        A real-time simulation of <span>Lattice</span>-style autonomous asset coordination.<br><br>
+        Manage networked ground nodes, electronic warfare payloads, layered area denial,
+        ISR pipelines, and air support CAS requests against escalating threat waves.<br><br>
+        <span>Toggle the LATTICE REF panel in-game to map each system to its real-world equivalent.</span>
+    </div>
+    <button id="introStartBtn"><span class="blink">▶</span> INITIALIZE SYSTEM</button>
+</div>
+
+<!-- ============================================================
+     LATTICE REFERENCE PANEL
+     ============================================================ -->
+<div id="latticePanel">
+    <div class="panel-header">
+        <span class="panel-title">⬡ LATTICE SYSTEM REFERENCE</span>
+        <button id="latticePanelClose">✕</button>
+    </div>
+    <div class="panel-body">
+        <div class="ref-section">
+            <div class="ref-section-title">Network Nodes</div>
+            <div class="ref-row">
+                <span class="ref-game">RR-01 → RR-10</span>
+                <span class="ref-real">Autonomous <em>Lattice nodes</em> — ground/air units that share a common operating picture, self-coordinate targeting, and report track state continuously to the mesh.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">HOSTILE TRACK</span>
+                <span class="ref-real"><em>Track object</em> in the Lattice data model — a fused contact with position, velocity, and classification attributes propagated across all nodes.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">UNKNOWN / IDENTIFIED</span>
+                <span class="ref-real"><em>IFF pipeline</em> — Lattice classifies contacts from UNKNOWN → SUSPECT → HOSTILE through sensor fusion and rules of engagement logic before authorizing engagement.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">PACKET (swarm)</span>
+                <span class="ref-real"><em>Low-cost UAS swarm</em> — small, fast attritable drones designed to saturate defenses. High volume, low signature.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">LOITERER</span>
+                <span class="ref-real"><em>Loitering munition</em> — autonomous platform that orbits a target area before terminal engagement. Slow but high-value threat.</span>
+            </div>
+        </div>
+        <div class="ref-section">
+            <div class="ref-section-title">Weapons & Effectors</div>
+            <div class="ref-row">
+                <span class="ref-game">EMP INTERDICTION</span>
+                <span class="ref-real"><em>Electronic warfare payload</em> — area denial through directed energy or RF jamming. Lattice nodes can coordinate EW effects across the battlespace.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">CLG GRID</span>
+                <span class="ref-real"><em>Layered area denial system</em> — analogous to Anduril's <em>Lattice-coordinated kinetic/directed energy perimeter</em>. Manages a fixed engagement zone with thermal constraints.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">FURY AIR SUPPORT</span>
+                <span class="ref-real"><em>CAS request via Lattice</em> — autonomous air wing tasked through the mesh. Lattice enables operators to request and manage air assets without voice comms to pilots.</span>
+            </div>
+        </div>
+        <div class="ref-section">
+            <div class="ref-section-title">C2 & ISR Systems</div>
+            <div class="ref-row">
+                <span class="ref-game">TTU LINK</span>
+                <span class="ref-real"><em>Tactical mesh uplink</em> — direct telemetry synchronization across all nodes. In Lattice, this represents the data-link layer that enables shared track state and coordinated targeting.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">XRST-01 → XRST-04</span>
+                <span class="ref-real"><em>Extended Range Sentry Towers</em> — fixed 80-foot sensor nodes. Detect, classify, and track threats at ranges up to 7.5 miles autonomously. Feed classified tracks directly into the Lattice mesh. Go offline if breached.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">ORS SCAN</span>
+                <span class="ref-real"><em>Overhead persistent ISR</em> — satellite or high-altitude sensor pass. Restores offline XRST towers and recovers lost Roadrunner assets. Triggers enemy speed increase as a trade-off.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">SIMULATE JAMMING / ECM</span>
+                <span class="ref-real"><em>Spectrum denial / Electronic Counter Measures</em> — adversary degradation of the data link. Lattice is designed to be resilient to comms-denied environments through autonomous node behavior.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">Kill Feed log</span>
+                <span class="ref-real"><em>Real-time track state log</em> — every engagement event, classification change, and system state update propagated to all nodes in the mesh simultaneously.</span>
+            </div>
+        </div>
+        <div class="ref-section">
+            <div class="ref-section-title">Logistics</div>
+            <div class="ref-row">
+                <span class="ref-game">RTB / RESUPPLY cycle</span>
+                <span class="ref-real"><em>Autonomous logistics loop</em> — Lattice nodes self-manage fuel and munitions state, autonomously routing back to supply points and returning to station without operator intervention.</span>
+            </div>
+            <div class="ref-row">
+                <span class="ref-game">PANIC LAUNCH</span>
+                <span class="ref-real"><em>Emergency autonomous tasking</em> — when all active defenders are depleted, partially-resupplied nodes are autonomously scrambled. Reflects Lattice's resilience to operator absence.</span>
+            </div>
+        </div>
+        <div class="lattice-note">
+            <span>Anduril's Lattice</span> is a software-defined command and control platform that fuses sensor data from heterogeneous assets into a single operational picture, enabling autonomous and semi-autonomous engagement decisions. This simulation models the <span>coordination layer</span>, not individual hardware.
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PERSISTENT STATS BAR
+     ============================================================ -->
+<div id="statsBar">
+    <div class="stat-item">
+        <span class="stat-label">Wave</span>
+        <span class="stat-value" id="statWave">—</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Kills</span>
+        <span class="stat-value cyan" id="statKills">0</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Active</span>
+        <span class="stat-value" id="statActive">—</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Integrity</span>
+        <span class="stat-value red" id="statLosses">100%</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value yellow" id="statStreak">0</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-label">Threats</span>
+        <span class="stat-value" id="statThreats">0</span>
+    </div>
+</div>
+
+<div id="gameOverScreen">
+    <h1>MISSION FAILED</h1>
+    <div class="go-stat"><span>WAVE REACHED</span><span class="go-val" id="goWave">0</span></div>
+    <div class="go-stat"><span>HOSTILES KILLED</span><span class="go-val" id="goKills">0</span></div>
+    <div class="go-stat"><span>BASE HITS TAKEN</span><span class="go-val" id="goLosses">0</span></div>
+    <div class="go-stat"><span>BEST STREAK</span><span class="go-val" id="goStreak">0</span></div>
+    <button id="rebootBtn">REBOOT SYSTEM</button>
+</div>
+
+<div id="hud">
+    <div style="font-weight:bold; font-size:14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
+        LATTICERUNNER 21.11
+    </div>
+    <button id="pauseBtn" style="margin-bottom:5px; background:rgba(0,255,0,0.15);">START SYSTEM</button>
+    <div class="btn-grid">
+        <button id="resetBtn">RESET</button>
+        <button id="skipBtn">SKIP SONG</button>
+    </div>
+    <button id="latticeToggleBtn">⬡ LATTICE SYSTEM REF</button>
+    <hr style="border-color:#0f0; opacity:0.2; margin:8px 0;">
+    <button id="furyBtn" disabled style="color:#00ffff; border-color:#00ffff; background:rgba(0,255,255,0.15);">FURY AIR SUPPORT</button>
+    <div class="btn-grid">
+        <button id="empBtn" disabled>EMP BLAST</button>
+        <button id="clgBtn" disabled>CLG GRID</button>
+    </div>
+    <div class="btn-grid">
+        <button id="ttuBtn" disabled>TTU LINK</button>
+        <button id="orsBtn" disabled>ORS SCAN</button>
+    </div>
+    <button id="jamBtn" disabled>SIMULATE JAMMING</button>
+    <hr style="border-color:#0f0; opacity:0.2; margin:8px 0;">
+    <div style="font-size:10px; color:#555; letter-spacing:1px; margin-bottom:4px;">DRONE SQUADRONS</div>
+    <button id="altiusBtn" disabled style="color:#00ffcc; border-color:#00ffcc; background:rgba(0,255,136,0.1); margin-bottom:4px;">ALTIUS — ANTI-UAS</button>
+    <button id="anvilBtn"  disabled style="color:#cc44ff; border-color:#cc44ff; background:rgba(204,68,255,0.1); margin-bottom:4px;">ANVIL — STRIKE DRONE</button>
+    <button id="rrDeployBtn" disabled style="color:#00ffff; border-color:#00ffff; background:rgba(0,255,255,0.1);">ROADRUNNER — INTERCEPTOR</button>
+</div>
+
+<div id="nowPlaying">
+    <div id="np-artist">Awaiting Input...</div>
+    <div id="np-track-mask">
+        <div class="song-title-container" id="np-track">System Offline</div>
+    </div>
+</div>
+
+<div id="recommendationBox">
+    <span style="font-weight:bold; color:#00ffff;">TACTICAL AI:</span><br>
+    <span id="recommendationText" style="color:#0f0; font-weight:bold; font-size:12px;">SYSTEM OFFLINE.</span>
+</div>
+
+<div id="roadrunnerStatus">
+    <span style="font-weight:bold; color:#00ffaa; margin-bottom:6px; display:block;">DRONE SQUADRON STATUS:</span>
+</div>
+
+<div id="telemetry">
+    <span id="esysStatus">E-System: UNINITIALIZED</span><br>
+    <span id="furyStatus" style="color:#00ffff;">Air Support: UNINITIALIZED</span><br>
+    <span id="clgStatus">CLG: UNINITIALIZED</span> | <span id="ttuStatus">TTU: UNINITIALIZED</span><br>
+    <span id="orsStatus">ORS: UNINITIALIZED</span><br>
+    <span id="altiusStatus" style="color:#00ffcc;">ALTIUS: UNINITIALIZED</span> |
+    <span id="anvilStatus"  style="color:#cc44ff;">ANVIL: UNINITIALIZED</span><br>
+    <span id="rrDeployStatus" style="color:#00ffff;">RR DEPLOY: UNINITIALIZED</span>
+</div>
+
+<div id="killfeed">Awaiting Tactical Input...<br></div>
+<audio id="bgMusic" preload="auto"></audio>
+
+
+<!-- Mapbox GL JS -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+
+<!-- Game scripts — load order matters -->
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/map.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/units.js"></script>
+<script src="js/update.js"></script>
+<script src="js/refresh.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
