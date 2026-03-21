@@ -1,64 +1,100 @@
-# 🛡️ LATTICERUNNER // Autonomous C2 Simulation
+# 🛡️ LATTICERUNNER 21.12  
+**Autonomous C2 Defense Simulation**
 
-**Live Demo:** [https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/](https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/)  
-**Current Version:** 21.11 — STABILITY HOTFIX
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Open%20Simulation-blue?style=for-the-badge&logo=github)](https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/)  
+[![GitHub repo](https://img.shields.io/badge/Repo-GitHub-black?style=for-the-badge&logo=github)](https://github.com/Lattice-Runner/LATTICERUNNER-C2-Sim)
 
-LATTICERUNNER is a browser-based, real-time **autonomous networked defense simulation** that emulates a Lattice-style command node. Defend a fixed high-value asset against escalating waves of hostile UAS swarms, loitering munitions, and strike aircraft (including jet-launched air-to-ground missiles) using distributed sensors, autonomous interceptors, electronic warfare, and on-call air support — all coordinated through a software-defined mesh with minimal human input.
+A **real-time browser-based simulation** of Anduril's Lattice platform — modeling **sensor fusion**, **autonomous drone tasking**, and **layered area denial** over live satellite imagery of the Antelope Valley.
 
-Built to surface real-world constraints: sensor fusion delays, classification confidence tiers, thermal/power limits on directed energy, comms jamming effects, altitude-specific engagement envelopes, and autonomous fallback when the operator or link is denied.
+This is **not** a tech demo or abstract game.  
+It is a working model of the coordination layer that will define the next fight.
 
-## Featured Capabilities (v21.11)
+## What's Running
 
-- **Persistent XRST Network** — 4 fixed Extended Range Sentry Towers (XRST-01–04) provide autonomous detection & classification out to ~7.5 mi. Towers go offline if physically breached.
-- **Tiered IFF Pipeline** — Contacts progress UNKNOWN → SUSPECT → HOSTILE via multi-sensor confidence accumulation  
-  (radar +5/tick, XRST +15/tick, EO/IR cone +35/tick, EO/IR ambient +15/tick, ground detect +20/tick, time-on-track bonus)
-- **Drone Squadrons**
-  - ALTIUS — fast anti-UAS kamikaze swarm (targets packets/FPV)
-  - ANVIL — heavier attrition strike drones
-  - ROADRUNNER — precision surface-to-air interceptors (limited altitude envelope)
-- **Effector Suite**
-  - EMP INTERDICTION — wide-area RF pulse (inner kill zone + outer disruption ring)
-  - CLG GRID — close-in laser defense perimeter (thermal-limited, ~8 kills max per activation)
-  - FURY AIR SUPPORT — on-demand autonomous CAS jets with air-to-air/ground missiles
-  - TTU LINK — temporary mesh uplink boost (improves packet intercept probability)
-  - ORS SCAN — orbital ISR refresh (recovers downed XRST towers, accelerates enemy approach as trade-off)
-- **Live ADS-B Integration** — Real transponder data from OpenSky Network overlaid on the operational picture. Live (neutral) aircraft over Edwards AFB airspace rendered in real time.
-- **Electronic Warfare Realism** — Simulated adversary jamming/ECM degrades EO/IR and TTU link; nodes fall back to local autonomy
-- **Countermeasures & Evasion** — High-value threats deploy flares to break Roadrunner locks; jets perform evasion maneuvers when threatened
-- **Persistent UI Elements** — Wave count, total kills, active assets, base integrity %, current streak, tactical AI recommendations, kill feed, glitch/jam FX, music marquee with volume controls
+### Sensor Fusion — 4 active layers per tick
+- **Radar** → +5 confidence/tick, full spawn envelope  
+- **XRST tower network** → +15 confidence/tick (4 towers)  
+- **EO/IR drone camera cones** → +35 inside cone, +15 ambient  
+- **Acoustic/seismic ground detection** → +20 (low-altitude only)
 
-## Core Engineering Concepts
+Contacts evolve:  
+**UNKNOWN** → **SUSPECT** → **HOSTILE**  
+Engagement authorized at **≥80 confidence**.
 
-### Modular C2 Architecture
-- **Sensor Mesh** — fused Common Operating Picture via XRST + drone EO/IR + ground layer
-- **Effector Rules** — autonomous ROE, engagement envelopes, thermal/cooldown limits
-- **State Tick** — 250 ms high-frequency simulation loop handling movement, confidence, intercepts, breaches
-- **Build Pipeline** — Python script keeps global constants synchronized across modules
+### Autonomous Squadrons
+- **ALTIUS** — 15 anti-UAS attritable drones (20% held in close-in reserve)  
+- **ANVIL** — 8 heavier attrition interceptors (fallback anti-FPV when ALTIUS saturated)  
+- **ROADRUNNER** — 2 precision turbojet interceptors (jets & missiles only)  
+- **FURY** — 2 autonomous CAS jets (depart Edwards AFB, egress when ammo expended)
 
-### Sensor Fusion & Classification
-Multi-layer confidence scoring per tick:
-- RADAR (wide coverage, low confidence) + XRST towers (medium range) + drone EO/IR cone (high confidence directional) + ground acoustic/seismic (low-alt only)
-- Full HOSTILE authorization requires ≥80 confidence
+### Effector Suite
+- **EMP interdiction** — kill zone + outer disruption ring (friendly collateral modeled)  
+- **CLG directed energy grid** — thermal-limited, 8 kills per activation  
+- **TTU mesh uplink boost**  
+- **ORS orbital ISR scan** — restores XRST towers, 20% base integrity repair
 
-### 3D Threat & Engagement Realism
-- NOE flight for FPV swarms (~low altitude terrain masking)
-- Altitude-based envelopes: Roadrunner missiles ineffective above ~500 m; base breach requires <50 m
-- Jet ingress at high altitude → terminal missile dive
-- Flares break locks → temporary Roadrunner re-acquisition delay
+### Threat Types (modeled PLA order of battle)
+- FPV swarms (~$500, NOE kamikaze saturation)  
+- CH-4 MALE strike drones (~$1–4M)  
+- TB-001 loitering munitions (~$2–5M)  
+- J-16 fighters (~$70M, ECM + flares)  
+- J-20 stealth fighters (~$110M, 4 flare sets, higher speed)  
+- PL-15 AGM missiles (~$1M, Mach 4+)
+
+### Electronic Warfare
+- Simulated adversary jamming  
+  - Degrades EO/IR and data links  
+  - Nodes fall back to local picture  
+  - New contacts invisible to jammed squads  
+  - Auto-tasking goes offline
+
+## Intelligence Reference System
+7 tabs inside the sim:
+
+| Tab                  | Content Focus                              |
+|----------------------|--------------------------------------------|
+| Lattice System       | Core architecture & logic                  |
+| 🦅 American Assets   | U.S. platforms & capabilities              |
+| ☠️ Chinese Assets    | PLA platforms & threat profiles            |
+| Economy of War       | Cost & production realities                |
+| Wargame Ref          | CSIS & CNAS reports (see below)            |
+| Music                | Soundtrack & immersion                     |
+| About                | Project background & credits               |
+
+**Wargame references** drawn from:  
+- CSIS "The First Battle of the Next War" (2023)  
+- CSIS "Lights Out" blockade study (2025)  
+- CSIS "Confronting Armageddon" nuclear dynamics (2024)  
+- CNAS "Dangerous Straits" (2023)
+
+## Live Data
+- Real **ADS-B aircraft** from OpenSky Network  
+- Updated every **30 seconds** over Edwards AFB airspace
 
 ## Technical Stack
+- **Rendering** — Mapbox GL JS + satellite imagery + dynamic GeoJSON  
+- **Logic** — Vanilla ES6, zero frameworks, 250 ms update loop  
+- **Build** — Python split script → modular JS for GitHub Pages  
+- **Audio** — HTML5 + Web Speech Synthesis  
+- **Deployment** — GitHub Pages + Dropbox CDN (audio)
 
-- **Rendering** → Mapbox GL JS (satellite + vector layers, dynamic sources for units/projectiles/explosions)
-- **Logic** → Vanilla ES6 JavaScript (zero-framework, single update loop)
-- **Audio** → HTML5 `<audio>` + Web Speech Synthesis (voice alerts + dynamic playlist)
-- **UI/Effects** — CSS glassmorphism HUD, glitch animations, marquee track titles, pulsing indicators
+## Who Built This
+Field operator and logistician based in **Lancaster, CA** — right next to Edwards AFB and Plant 42.  
+- CDL Class A  
+- No formal CS background  
+- Built off-grid on solar + Starlink  
+- Used **AI-assisted development** as deliberate workflow
 
-## Mission Context
+The **2027 China/Taiwan threat timeline is real**.  
+It's important to have people who understand both the **physical layers** and **software-defined layers**.
 
-I’m a field operator/logistician based in the High Desert near Edwards AFB. CDL Class A, years working austere sites — climbing towers, troubleshooting RF in the dirt, moving heavy gear under time pressure.
+This project is preparation.
 
-I taught myself to code because I believe the future of defense depends on operators who can both climb a tower to fix a sensor and SSH into the box to debug the kernel.
+Open to connect on:  
+defense tech • CUAS • counter intrusion • contested logistics • autonomous systems deployment
 
-- **Timeline**: Focused on rapid capability scaling for the **2027 mission window**
-- **Status**: Ready to deploy immediately
+— **Chris Nordahl**  
+📍 34.8165°N, 118.2000°W
 
+> Built using Anduril's **publicly available information**.  
+> Not affiliated with or endorsed by Anduril Industries.
