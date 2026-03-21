@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LATTICERUNNER // 21.11</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="map"></div>
+<div id="jamOverlay"></div>
+<div id="wave">WAVE <span id="wn">1</span> INCOMING</div>
+<div id="baseHit" class="base-hit"></div>
+
+<!-- Stats Bar -->
+<div id="statsBar">
+    <div class="stat-item"><span class="stat-label">Wave</span><span class="stat-value cyan" id="statWave">—</span></div>
+    <div class="stat-item"><span class="stat-label">Kills</span><span class="stat-value" id="statKills">0</span></div>
+    <div class="stat-item"><span class="stat-label">Active</span><span class="stat-value" id="statActive">—</span></div>
+    <div class="stat-item"><span class="stat-label">Integrity</span><span class="stat-value red" id="statLosses">100%</span></div>
+    <div class="stat-item"><span class="stat-label">Streak</span><span class="stat-value yellow" id="statStreak">0</span></div>
+    <div class="stat-item"><span class="stat-label">Threats</span><span class="stat-value red" id="statThreats">—</span></div>
+</div>
+
+<!-- Game Over Screen -->
+<div id="gameOverScreen" style="display:none;">
+    <h1>MISSION FAILED</h1>
+    <div class="go-stat"><span>WAVE REACHED</span><span class="go-val" id="goWave">0</span></div>
+    <div class="go-stat"><span>HOSTILES KILLED</span><span class="go-val" id="goKills">0</span></div>
+    <div class="go-stat"><span>BASE HITS TAKEN</span><span class="go-val" id="goLosses">0</span></div>
+    <div class="go-stat"><span>BEST STREAK</span><span class="go-val" id="goStreak">0</span></div>
+    <button id="rebootBtn">⟳ REINITIALIZE SYSTEM</button>
+</div>
+
+<!-- ============================================================
+     INTRO SPLASH
+     ============================================================ -->
+<div id="introSplash">
+    <h1>LATTICERUNNER</h1>
+    <div class="sub">AUTONOMOUS NETWORKED DEFENSE SIMULATION // v21.11</div>
+    <div class="desc">
+        A real-time simulation of <span>Lattice</span>-style autonomous asset coordination.<br><br>
+        Manage networked ground nodes, electronic warfare payloads, layered area denial,
+        ISR pipelines, and air support CAS requests against escalating threat waves.<br><br>
+        <span>Toggle the LATTICE REF panel in-game to map each system to its real-world equivalent.</span>
+    </div>
+    <button id="introStartBtn"><span class="blink">▶</span> INITIALIZE SYSTEM</button>
+</div>
+
+<!-- ============================================================
+     UNIFIED REFERENCE PANEL — tabbed, full screen
+     ============================================================ -->
+<div id="refPanel">
+    <div id="refPanelHeader">
+        <span id="refPanelTitle">⬡ LATTICERUNNER REFERENCE SYSTEM</span>
+        <button id="refPanelClose">✕</button>
+    </div>
+    <div id="refPanelTabs">
+        <button class="ref-tab tab-lattice active" data-tab="lattice">⬡ Lattice System</button>
+        <button class="ref-tab tab-threat"  data-tab="threat">☠ Enemy Threats</button>
+        <button class="ref-tab tab-econ"    data-tab="econ">💰 Economy of War</button>
+        <button class="ref-tab tab-wargame" data-tab="wargame">🎯 Wargame Ref</button>
+        <button class="ref-tab tab-assets"  data-tab="assets">🇺🇸 US Assets</button>
+        <button class="ref-tab tab-music"   data-tab="music">🎵 Music</button>
+        <button class="ref-tab tab-about"   data-tab="about">👤 About</button>
+    </div>
+    <div id="refPanelBody">
+
+        <!-- ── LATTICE SYSTEM TAB ─────────────────────────────── -->
+        <div class="ref-tab-content tab-lattice-content active" id="tab-lattice">
+            <div class="ref-section">
+                <div class="ref-section-title">Network Nodes</div>
+                <div class="ref-row">
+                    <span class="ref-game">ALTIUS / ANVIL / ROADRUNNER squads</span>
+                    <span class="ref-real">Autonomous <em>Lattice effector nodes</em> — drone units that share a common operating picture, self-coordinate targeting, and report track state continuously to the mesh. Roadrunner deploys 2 precision interceptors per launch; Altius deploys 15 anti-UAS drones; Anvil deploys 8 attrition drones.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">HOSTILE TRACK</span>
+                    <span class="ref-real"><em>Track object</em> in the Lattice data model — a fused contact with position, velocity, and classification attributes propagated across all nodes.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">UNKNOWN / SUSPECT / HOSTILE</span>
+                    <span class="ref-real"><em>IFF pipeline</em> — Lattice classifies contacts from UNKNOWN → SUSPECT → HOSTILE through sensor fusion and rules of engagement logic before authorizing engagement.<br>
+                    <span style="color:#0066ff;font-size:10px;">● RADAR (0.45° range) +5 conf/tick</span> &nbsp;
+                    <span style="color:#00ffaa;font-size:10px;">● XRST +15 conf/tick</span> &nbsp;
+                    <span style="color:#00ffcc;font-size:10px;">● EO/IR CONE +35 conf/tick</span> &nbsp;
+                    <span style="color:#ff9900;font-size:10px;">● GND DETECT +20 conf/tick</span></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">PACKET (swarm)</span>
+                    <span class="ref-real"><em>Low-cost UAS swarm</em> — small, fast attritable drones designed to saturate defenses. High volume, low signature.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">LOITERER</span>
+                    <span class="ref-real"><em>Loitering munition</em> — autonomous platform that orbits a target area before terminal engagement. Slow but high-value threat.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">Effector Systems</div>
+                <div class="ref-row">
+                    <span class="ref-game">EMP INTERDICTION</span>
+                    <span class="ref-real"><em>Electronic warfare payload</em> — area denial through directed RF pulse. Kill zone destroys all electronics. Outer disruption ring slows surviving threats 85% for 18 seconds. WARNING: destroys friendly XRST towers, drones, and CLG. Use as last resort only.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">CLG GRID</span>
+                    <span class="ref-real"><em>Layered area denial system</em> — Lattice-coordinated directed energy perimeter. Thermal-limited: max ~8 kills per activation before forced cooldown. FPV swarms have 50% hit chance per tick — small fast targets are difficult to track.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">FURY AIR SUPPORT</span>
+                    <span class="ref-real"><em>CAS request via Lattice</em> — autonomous air wing tasked through the mesh. Departs Edwards AFB northeast of base. Engages ground threats and enemy jets. Egresses when ammo expended.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">TTU LINK</span>
+                    <span class="ref-real"><em>Tactical mesh uplink</em> — direct telemetry synchronization. Improves packet intercept probability to 75%. Silences voice comms during active uplink.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">ORS SCAN</span>
+                    <span class="ref-real"><em>Overhead persistent ISR</em> — satellite sensor pass. Restores all offline XRST towers and repairs 20% base integrity. Trade-off: triggers enemy speed increase for 20 seconds.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">Sensor Network</div>
+                <div class="ref-row">
+                    <span class="ref-game">XRST-01 → XRST-04</span>
+                    <span class="ref-real"><em>Extended Range Sentry Towers</em> — fixed 80-foot sensor nodes. Detect, classify, and track threats at ranges up to 7.5 miles autonomously. Feed classified tracks directly into the Lattice mesh. Go offline if physically breached.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">AUTO-TASKING ENGINE</span>
+                    <span class="ref-real"><em>Autonomous decision layer</em> — scores all identified threats by proximity, threat level, and time-to-impact. Automatically assigns effectors and deploys squadrons when AUTO mode is enabled. Player can override at any time.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">SIMULATE JAMMING / ECM</span>
+                    <span class="ref-real"><em>Spectrum denial / Electronic Counter Measures</em> — adversary degradation of the data link. Under jamming, each squad falls back to its local picture at jam onset. New contacts spawned after jamming are invisible to affected nodes. Auto-tasking goes offline.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">LOITER / RE-ENGAGE cycle</span>
+                    <span class="ref-real"><em>Autonomous persistence loop</em> — drone nodes loiter at intercept-ready distance when no target is available, immediately re-engaging when a new contact is authorized. 20% of each squad holds a tight reserve orbit as a last-ditch intercept layer.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Kill Feed log</span>
+                    <span class="ref-real"><em>Real-time track state log</em> — every engagement event, classification change, and system state update propagated to all nodes in the mesh simultaneously.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ENEMY THREATS TAB ─────────────────────────────── -->
+        <div class="ref-tab-content tab-threat-content" id="tab-threat">
+            <div class="ref-section">
+                <div class="ref-section-title">PLA UAS Threat Types</div>
+                <div class="ref-row">
+                    <span class="threat-name">FPV SWARM</span>
+                    <span class="threat-desc">First-Person View kamikaze drone. Commercial off-the-shelf quadcopter modified for terminal attack. <em>Speed: 120–160 km/h. Alt: 20–150m NOE.</em> Flies nap-of-earth to avoid radar. Saturates defenses through volume. Cost: ~$500 USD. Defeats expensive interceptors through exchange ratio alone.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">CH-4 STRIKE</span>
+                    <span class="threat-desc">CASC CH-4 medium-altitude strike drone. MALE-class UAS with ISR and precision strike capability. <em>Alt: 200–2,500m. Endurance: 30–40 hrs. Payload: AR-1 missile or 50kg bomb.</em> Analogous to MQ-1 Predator. Widely exported. Used in Yemen, Iraq, Libya, Ethiopia.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">TB-001 LOITERER</span>
+                    <span class="threat-desc">CASC TB-001 twin-boom loitering strike UAS. High-endurance persistence platform. <em>Alt: 800–4,000m. Endurance: 35+ hrs. Payload: 100kg.</em> Designed to orbit a target area for hours before committing to terminal attack. Difficult to track due to low acoustic signature at altitude.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">PLA Fighter Aircraft</div>
+                <div class="ref-row">
+                    <span class="threat-name">J-16</span>
+                    <span class="threat-desc">Shenyang J-16 multirole strike fighter. <em>Speed: Mach 2.0. Combat radius: 1,500 km. Payload: 12,000 kg.</em> Primary PLA long-range strike platform. Carries PL-15 BVR missile (200+ km range). Equipped with ECM jamming pod. 2 flare sets. Entering service 2015.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">J-20</span>
+                    <span class="threat-desc">Chengdu J-20 fifth-generation stealth fighter. <em>Speed: Mach 2.0+. Combat radius: 1,100 km.</em> China's most advanced combat aircraft. Low-observable design, AESA radar, internal weapons bay. 4 flare sets. Faster and more agile than J-16. Entering service 2017.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">PL-15 AGM</span>
+                    <span class="threat-desc">PLA air-launched anti-radiation/ground attack missile. <em>Speed: Mach 4+. Range: 200+ km.</em> Active radar seeker. Designed to defeat advanced air defense systems. Roadrunner is the only system in this sim capable of defeating it in flight.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">Threat Behavior</div>
+                <div class="ref-row">
+                    <span class="threat-name">Evasion</span>
+                    <span class="threat-desc">Jets detect inbound Roadrunner interceptors and execute 90–135° evasion breaks at increased speed. J-20 evades more aggressively than J-16. Will not fire missiles while evading.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">Flares / ECM</span>
+                    <span class="threat-desc">Jets deploy IR flares when Roadrunner closes within flare range, breaking lock for 3.5 seconds. Forces re-acquisition. J-20 carries 4 flare sets; J-16 carries 2. 8-second cooldown between deployments.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="threat-name">Drone Targeting</span>
+                    <span class="threat-desc">CH-4 and TB-001 will divert from base attack to engage friendly Altius and Anvil drones within proximity. FPV swarms are too fast and committed to divert — they fly straight for base.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ECONOMY OF WAR TAB ────────────────────────────── -->
+        <div class="ref-tab-content tab-econ-content" id="tab-econ">
+            <div class="ref-section">
+                <div class="ref-section-title">🇨🇳 PLA Threat Assets</div>
+                <div class="econ-row">
+                    <span class="econ-label">FPV Swarm Drone</span>
+                    <span class="econ-data"><span class="red">~$500</span> per unit. China produces <em>est. 100,000+/month</em> across dozens of manufacturers. DJI-derived components. Can be assembled in hours. Exchange ratio is the entire threat — one $500 drone can destroy a $50,000 interceptor.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">CH-4 Strike Drone</span>
+                    <span class="econ-data"><span class="red">~$1–4M</span> per unit. CASC produces est. <em>50–100/year</em>. Exported to 10+ countries. Comparable to MQ-1 Predator cost.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">TB-001 Loiterer</span>
+                    <span class="econ-data"><span class="red">~$2–5M</span> per unit. <em>Est. 30–60/year</em> production. Strategic asset — not attritable.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">J-16 Fighter</span>
+                    <span class="econ-data"><span class="red">~$70M</span> per aircraft. PLA operates <em>est. 200+</em> airframes. ~24/year production. Each carries 6–12 PL-15 missiles at ~$1M each.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">J-20 Fighter</span>
+                    <span class="econ-data"><span class="red">~$110M</span> per aircraft. PLA operates <em>est. 200+</em> airframes. ~20/year production. China's only 5th-gen platform.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">🇺🇸 US Defense Assets</div>
+                <div class="econ-row">
+                    <span class="econ-label">Altius-600</span>
+                    <span class="econ-data"><span class="green">~$25–75K</span> est. per unit. Anduril/Area-I. <em>Attritable</em> — designed to be expended. Tube-launched, 6-hour endurance, 11 lbs. payload. Counters the FPV exchange ratio problem.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">Anvil Interceptor</span>
+                    <span class="econ-data"><span class="green">~$50–100K</span> est. per unit. Anduril autonomous interceptor. Attritable — cheaper than a Hellfire (~$150K) by design. Semi-attritable with survival chance on glancing intercepts.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">Roadrunner-M</span>
+                    <span class="econ-data"><span class="green">~$100–150K</span> est. per unit. Anduril has publicly positioned Roadrunner below the cost of a Hellfire missile (~$150K). Reusable if intercept not required — per-intercept cost far lower than single-use missiles. <em>Only US system capable of defeating PL-15 class missiles</em> at this cost point. 550 days from white paper to first flight.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">XRST Tower</span>
+                    <span class="econ-data"><span class="green">Est. $500K–3M</span> per tower. 80-foot fixed sensor node. Autonomous classification, 7.5 mile range. <em>Launched Nov 2023.</em> 300+ deployed on US southern border. 100K+ apprehensions assisted.</span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">Fury / CCA</span>
+                    <span class="econ-data"><span class="green">~$5–15M</span> est. per airframe. Collaborative Combat Aircraft — autonomous wingman to crewed fighters. Attritable at scale. <em>First flight achieved under Fury program.</em></span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">⚖ The Exchange Problem</div>
+                <div class="econ-row">
+                    <span class="econ-label">Cost Exchange Ratio</span>
+                    <span class="econ-data">A $500 FPV swarm destroying a $50,000 Altius = <span class="red">100:1 unfavorable ratio</span>. At scale this is unsustainable. The premise of autonomous attritable defense is collapsing this ratio — producing interceptors cheap and fast enough to match adversary volume. <em>This is why Lattice exists.</em></span>
+                </div>
+                <div class="econ-row">
+                    <span class="econ-label">Production Capacity</span>
+                    <span class="econ-data">China produces an estimated <span class="red">10M+ consumer drones/year</span> with dual-use military conversion potential. US autonomous defense production is scaling rapidly but remains orders of magnitude smaller. <em>Speed of production is now a strategic variable.</em></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── WARGAME REFERENCE TAB ─────────────────────────── -->
+        <div class="ref-tab-content tab-wargame-content" id="tab-wargame">
+            <div class="ref-section">
+                <div class="ref-section-title">CSIS — First Battle of the Next War (2023)</div>
+                <div class="wg-row">
+                    <span class="wg-label">Core Finding</span>
+                    <span class="wg-desc">The US and Taiwan <em>defeat a Chinese amphibious invasion</em> in most scenarios — but at severe cost. The US loses <span class="red">two aircraft carriers, 10–20 surface ships, 900+ aircraft</span>, and thousands of personnel in three weeks.<span class="wg-source">SOURCE: CSIS "First Battle of the Next War" — Wargaming a Chinese Invasion of Taiwan, 2023</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">UAS Role</span>
+                    <span class="wg-desc">Autonomous systems featured prominently as force multipliers. <em>Attritable UAS extended strike reach without risking pilots.</em> CSIS noted that cheap drone saturation is a key PLA tactic for overwhelming point defenses — directly modeled in this sim's wave composition.<span class="wg-source">SOURCE: CSIS wargame assumption sets, 2023</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Key Variable</span>
+                    <span class="wg-desc">Whether the US <span class="red">deploys forward assets to Taiwan in time</span> is the single largest determinant of outcome. Models XRST pre-deployment as analogous forward sensor positioning.<span class="wg-source">SOURCE: CSIS First Battle, scenario assumptions</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Taiwan Scenario</span>
+                    <span class="wg-desc">Taiwan's ground forces hold the beaches. But missile saturation of C2 nodes in the first hours is modeled as near-certain. Autonomous distributed C2 — Lattice-style mesh — is the proposed counter.<span class="wg-source">SOURCE: CSIS First Battle, ground campaign modeling</span></span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">CNAS — Dangerous Straits (2023)</div>
+                <div class="wg-row">
+                    <span class="wg-label">Core Finding</span>
+                    <span class="wg-desc">CNAS tabletop exercises found that <em>ambiguity in the opening hours</em> is the most dangerous phase. Decision timelines compress faster than human command structures can process. <span class="yellow">Autonomous systems with pre-delegated authority</span> are the recommended response.<span class="wg-source">SOURCE: CNAS "Dangerous Straits" tabletop exercise series, 2023</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Sensor Fusion</span>
+                    <span class="wg-desc">CNAS exercises surfaced <em>track correlation failure</em> as a leading cause of engagement delays. Lattice-style sensor fusion directly addresses this. This sim models the UNKNOWN→SUSPECT→HOSTILE confidence pipeline as the solution.<span class="wg-source">SOURCE: CNAS autonomous systems working group findings</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Comms Denied</span>
+                    <span class="wg-desc">All CNAS scenarios modeled significant <span class="red">Chinese EW degradation of US data links</span> in the first 24–48 hours. Nodes that could not operate autonomously under comms denial became liabilities. <em>This directly motivated this sim's DEGRADED COMMS mode.</em><span class="wg-source">SOURCE: CNAS EW vulnerability assessment, 2022–2023</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Logistics</span>
+                    <span class="wg-desc">CNAS found that <em>sustainment under fire</em> — maintaining forward-deployed sensors and effectors — is a critical unsolved problem. Field operators who can repair systems in austere environments are as strategically valuable as the systems themselves.<span class="wg-source">SOURCE: CNAS logistics vulnerability study, 2023</span></span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">CSIS — Lights Out? Wargaming a Chinese Blockade (July 2025)</div>
+                <div class="wg-row">
+                    <span class="wg-label">Core Finding</span>
+                    <span class="wg-desc">26 wargames on a Chinese blockade scenario. China could inflict serious hardship — especially targeting Taiwan's energy sector — but <em>a blockade would not be low-risk or low-cost for Beijing.</em> Any blockade creates escalatory pressures difficult to contain that could lead to large-scale war.<span class="wg-source">SOURCE: CSIS "Lights Out? Wargaming a Chinese Blockade of Taiwan," July 2025</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Deterrence Key</span>
+                    <span class="wg-desc">Taiwan and the US could strengthen deterrence by <em>demonstrating a blockade is not feasible</em> — forward-deployed sensors, autonomous defense networks, and pre-positioned assets are the deterrence layer. Models the XRST pre-deployment concept directly.<span class="wg-source">SOURCE: CSIS Blockade Wargame, 2025</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Escalation Risk</span>
+                    <span class="wg-desc">A blockade scenario generates massive convoy battles and <span class="red">unpredictable escalation dynamics</span> — neither side can fully control the pace. Autonomous C2 systems that can operate under ambiguity and comms denial are more critical in a blockade than an invasion scenario.<span class="wg-source">SOURCE: CSIS Blockade Wargame, 2025</span></span>
+                </div>
+            </div>
+
+            <div class="ref-section">
+                <div class="ref-section-title">CSIS — Confronting Armageddon: Nuclear Dynamics (December 2024)</div>
+                <div class="wg-row">
+                    <span class="wg-label">Core Finding</span>
+                    <span class="wg-desc">15 wargame simulations on nuclear dynamics in a Taiwan invasion. <em>Greatest pressure for nuclear use came when China's invasion was failing</em> and CCP rule felt threatened — a "gamble for resurrection" scenario. US diplomacy was more important than nuclear brinksmanship.<span class="wg-source">SOURCE: CSIS "Confronting Armageddon," December 2024</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Implication</span>
+                    <span class="wg-desc">A successful conventional defense — stopping the invasion before China reaches crisis — is the best nuclear deterrent. <em>This is why autonomous layered defense matters at the tactical level:</em> winning conventionally prevents the scenario where nuclear use becomes rational for Beijing.<span class="wg-source">SOURCE: CSIS Confronting Armageddon, 2024</span></span>
+                </div>
+            </div>
+
+            <div class="ref-section">
+                <div class="ref-section-title">Lessons from Ukraine & Red Sea (2023–2025)</div>
+                <div class="wg-row">
+                    <span class="wg-label">UAS Dominance</span>
+                    <span class="wg-desc">Ukraine has demonstrated that <em>cheap attritable drones can neutralize expensive conventional assets</em> — including naval vessels and armored vehicles. FPV swarms costing hundreds of dollars have destroyed tanks costing millions. The exchange ratio problem modeled in this sim is now empirically validated.<span class="wg-source">SOURCE: CSIS commentary, September 2025</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">C2 Resilience</span>
+                    <span class="wg-desc">Red Sea Houthi drone/missile campaign against commercial shipping showed that <span class="red">point defense systems alone are insufficient against saturation attacks.</span> Layered autonomous defense — exactly what this sim models — is the architecture both CSIS and CNAS now recommend.<span class="wg-source">SOURCE: CNAS autonomous systems assessments, 2024–2025</span></span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Irregular Warfare</span>
+                    <span class="wg-desc">CSIS assessment: <em>Ukraine and the Middle East have confirmed irregular warfare and uncrewed systems are defining features of contemporary conflict.</em> Nations that treat autonomous defense as experimental rather than operational are strategically behind.<span class="wg-source">SOURCE: CSIS commentary, September 2025</span></span>
+                </div>
+            </div>
+
+            <div class="ref-section">
+                <div class="ref-section-title">How This Sim Maps to Wargame Findings</div>
+                <div class="wg-row">
+                    <span class="wg-label">XRST Network</span>
+                    <span class="wg-desc">Models the <em>pre-deployed forward sensor layer</em> that CSIS identified as decisive. Towers going offline models C2 node attrition — the PLA's primary first-strike objective in both studies.</span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Auto-Tasking</span>
+                    <span class="wg-desc">Directly models the CNAS recommendation for <em>pre-delegated autonomous authority</em>. When AUTO mode is enabled, the system handles engagement decisions faster than human reaction time — the exact capability gap both studies identified.</span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Comms Denied</span>
+                    <span class="wg-desc">Simulates the CNAS EW scenario — squads fall back to their <em>local picture</em> at jamming onset and operate independently. Models realistic sensor blackout and degraded autonomy.</span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">Wave Composition</span>
+                    <span class="wg-desc">FPV saturation + MALE strike drones + loitering munitions + fighter jets mirrors the <em>layered PLA strike package</em> in CSIS scenarios — designed to overwhelm single-layer defenses, requiring the layered response this sim models.</span>
+                </div>
+                <div class="wg-row">
+                    <span class="wg-label">EMP as Last Resort</span>
+                    <span class="wg-desc">Both studies flagged <span class="red">friendly fire from EW/DE weapons</span> as a serious risk. EMP in this sim destroys friendly sensors and drones in range — a genuine last resort, not a free win button.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── US ASSETS TAB ──────────────────────────────────── -->
+        <div class="ref-tab-content tab-assets-content" id="tab-assets">
+            <div class="ref-section">
+                <div class="ref-section-title">Anduril Industries — Autonomous Effectors</div>
+                <div class="ref-row">
+                    <span class="ref-game">Altius-600</span>
+                    <span class="ref-real"><em>Anti-UAS attritable drone.</em> Tube-launched, ~11 lbs, 400+ km/h, 6+ hr endurance. Modular payload — kinetic or EW warhead. Designed to be expended. ~$25–75K per unit. In sim: 15 per launch, kamikaze anti-FPV role, 20% held as close-in reserve.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Anvil</span>
+                    <span class="ref-real"><em>Autonomous UAS interceptor.</em> Heavier intercept payload than Altius. Semi-attritable — 30% survival on glancing intercepts. ~$50–100K est. In sim: 8 per launch, targets CH-4 and TB-001, fallback anti-FPV when Altius overwhelmed.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Roadrunner-M</span>
+                    <span class="ref-real"><em>Autonomous turbojet interceptor.</em> Vertical launch, supersonic, reusable if no intercept required. Sub-Hellfire cost (~$100–150K). Only system in this sim capable of defeating inbound PL-15 missiles and fighter jets. 550 days white paper to first flight.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Fury / CCA</span>
+                    <span class="ref-real"><em>Collaborative Combat Aircraft.</em> Autonomous wingman alongside crewed F-35/F-22. Attritable at scale. ~$5–15M est. In sim: 2 jets depart Edwards AFB, engage ground and air targets, egress when ammo expended.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">XRST Tower</span>
+                    <span class="ref-real"><em>Extended Range Sentry Tower.</em> 80-foot fixed mast. Autonomous detection, classification, and tracking to 7.5 miles. Feeds classified tracks directly into Lattice mesh. ~$500K–3M per unit. Launched Nov 2023. 300+ on US southern border — 100,000+ apprehensions assisted. In sim: 4 towers, go offline if physically breached.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Lattice Platform</span>
+                    <span class="ref-real"><em>Software-defined C2.</em> Fuses sensor data from heterogeneous assets into a single operational picture. Autonomous and semi-autonomous engagement decisions. Designed for comms-denied resilience — nodes operate autonomously when data link degrades. This entire sim models the Lattice coordination layer.</span>
+                </div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">Local Context — Antelope Valley</div>
+                <div class="ref-row">
+                    <span class="ref-game">Edwards AFB</span>
+                    <span class="ref-real"><em>Air Force Flight Test Center.</em> ~30 miles northeast of sim base. Home of USAF Test Pilot School. Primary test facility for B-21, F-35, and autonomous systems programs. Fury squad in this sim departs from Edwards. Real-world neighbor to Lancaster, CA — where this sim was built.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Plant 42 / Skunk Works</span>
+                    <span class="ref-real"><em>USAF Plant 42, Palmdale.</em> 15 miles south of sim base. Production facility for B-2, B-21, and classified platforms. Lockheed Skunk Works and Northrop Grumman both operate here. The Antelope Valley is one of the densest concentrations of defense aerospace capability on earth.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MUSIC TAB ─────────────────────────────────────── -->
+        <div class="ref-tab-content tab-music-content" id="tab-music">
+            <div class="ref-section">
+                <div class="ref-section-title">Playlist — Artist Bios</div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Sister Rosetta Tharpe</span>
+                    <span class="ref-real"><em>Up Above My Head — Always plays first.</em><div class="music-bio">1915–1973. The "Godmother of Rock and Roll." Guitar virtuoso who pioneered electric gospel and directly influenced Chuck Berry, Elvis, Little Richard, and Johnny Cash. Played with ferocity decades before rock guitar had a name. Forgotten for years, now recognized as foundational. Opens every session because she built something real before anyone had a category for it.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Lightnin' Hopkins</span>
+                    <span class="ref-real"><em>Hurricane Betsy / Nothin' But The Blues / Penitentiary Blues</em><div class="music-bio">1912–1982. Houston, TX. One of the most recorded blues artists in history — over 800 songs. Self-taught, raw, completely original. Recorded in his living room as often as a studio. His guitar was conversational — he talked through it. Three tracks because once wasn't enough.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Chuck Berry</span>
+                    <span class="ref-real"><em>Too Much Monkey Business / Johnny B. Goode / Back In The U.S.A.</em><div class="music-bio">1926–2017. St. Louis, MO. Invented the vocabulary of rock guitar. Duck walk, double-string bends, the opening riff to Johnny B. Goode — all him. Keith Richards called him "the Shakespeare of rock and roll." Three tracks because he earned it.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Mississippi Fred McDowell</span>
+                    <span class="ref-real"><em>The Train I Ride</em><div class="music-bio">1904–1972. Como, MS. Delta blues slide guitarist. Played with a glass bottle neck, never changed his style for anyone. Discovered by Alan Lomax in 1959 at age 55. Influenced the Rolling Stones. Said: "I do not play no rock and roll."</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Little Richard</span>
+                    <span class="ref-real"><em>The Girl Can't Help It</em><div class="music-bio">1932–2020. Macon, GA. Screaming, pounding, unstoppable. One of the architects of rock and roll. Paul McCartney said copying Little Richard taught him how to sing. Pure energy on record.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">John Lee Hooker</span>
+                    <span class="ref-real"><em>I Need Some Money</em><div class="music-bio">1917–2001. Clarksdale, MS → Detroit. Stomping boogie blues with a hypnotic groove unlike anyone else. Didn't need a band — just his foot stomping and his guitar. Influenced Van Morrison, ZZ Top, the Rolling Stones.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Sonny Boy Williamson</span>
+                    <span class="ref-real"><em>One Way Out</em><div class="music-bio">1912–1965. Glendora, MS. Harmonica genius. Toured Europe with the Yardbirds and Animals in the 1960s and outplayed them all. "One Way Out" was later covered by the Allman Brothers. Did things on a harmonica no one had thought of.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Aretha Franklin</span>
+                    <span class="ref-real"><em>I Say A Little Prayer</em><div class="music-bio">1942–2018. Memphis → Detroit. The Queen of Soul. Grew up in church, trained as a pianist, became the greatest vocalist in American popular music. I Say A Little Prayer is pure joy.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Ray Charles</span>
+                    <span class="ref-real"><em>Rainy Night In Georgia</em><div class="music-bio">1930–2004. Albany, GA. Blind from age 7. Fused gospel, blues, jazz, and country into soul music. Rainy Night In Georgia is melancholy and warm at the same time — perfect for a long watch.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">B.B. King</span>
+                    <span class="ref-real"><em>Better Not Look Down</em><div class="music-bio">1925–2015. Itta Bena, MS. The King of the Blues. His guitar Lucille was as expressive as any voice. Played 300+ dates a year for decades. Better Not Look Down — uptempo, confident, exactly right for late-wave defense.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Lead Belly</span>
+                    <span class="ref-real"><em>When The Boys Were Out On The Western Plains</em><div class="music-bio">1888–1949. Huddie Ledbetter. 12-string guitar master. Discovered in Angola Prison by Alan Lomax. Wrote Midnight Special, Goodnight Irene, Gallows Pole. His recordings from the 1930s–40s sound like they were made in a room with no walls.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Dizzy Gillespie</span>
+                    <span class="ref-real"><em>Bird Of Paradise</em><div class="music-bio">1917–1993. Cheraw, SC. Co-invented bebop with Charlie Parker. Bent trumpet bell, puffed cheeks, harmonic sophistication decades ahead of its time. Bird Of Paradise is pure bebop architecture — complex, fast, joyful.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Fats Domino</span>
+                    <span class="ref-real"><em>I'm Gonna Be A Wheel Someday / Poor Me</em><div class="music-bio">1928–2017. New Orleans, LA. Rolling piano, second line rhythm, warm voice. I'm Gonna Be A Wheel Someday is exactly the right attitude for a defense operator in the desert building something from nothing.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Huey Lewis & The News</span>
+                    <span class="ref-real"><em>Workin' For A Livin'</em><div class="music-bio">1950–present. Blue-collar rock. Workin' For A Livin' is three minutes of honest American energy. No pretense. Earned its place.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Jimmy Reed</span>
+                    <span class="ref-real"><em>Baby What Do You Want Me To Do</em><div class="music-bio">1925–1976. Dunleith, MS. Hypnotic shuffle blues. Elvis, the Rolling Stones, and Grateful Dead all covered his songs. His wife whispered lyrics to him during recordings because he forgot them. Didn't matter — the groove was everything.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Tony Rice</span>
+                    <span class="ref-real"><em>I've Waited As Long As I Can</em><div class="music-bio">1951–2020. Danville, VA. The greatest flatpicking guitarist in bluegrass history. Played a 1935 Martin D-28 that belonged to Clarence White. I've Waited As Long As I Can has a patience and tension that fits a long watch.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Queen</span>
+                    <span class="ref-real"><em>We Will Rock You</em><div class="music-bio">London. Freddie Mercury, Brian May, Roger Taylor, John Deacon. We Will Rock You is two minutes of stomp-stomp-clap and a guitar solo. It has no right to work as well as it does.</div></span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game" style="color:#ff88cc;">Blues Brothers</span>
+                    <span class="ref-real"><em>Green Onions</em><div class="music-bio">Jake and Elwood Blues. The 1980 film introduced a generation to soul and R&B. Green Onions is originally by Booker T. & the MGs (1962) — organ groove over a simple chord pattern. Timeless.</div></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ABOUT TAB ──────────────────────────────────────── -->
+        <div class="ref-tab-content tab-about-content" id="tab-about">
+            <div class="ref-section">
+                <div class="ref-section-title">Sim Creator — Why This Project</div>
+                <div class="about-statement">
+                    I built this from a Mojave ranch to understand Lattice-style real-time C2 and autonomy at machine speed.<br><br>
+                    The mission is everything: countering the China/Taiwan threat timeline in 2027.<br><br>
+                    I don't care about hours or titles — I care about being ready when it counts.<br><br>
+                    No formal CS background — just a business degree, heavy machinery experience, and relentless iteration on a phone in the desert.<br><br>
+                    Off-grid, solar + Starlink powered. Zero excuses.<br><br>
+                    This isn't a game. It's an experiment in threat fusion, auto-tasking, and layered defense — so we're not caught flat-footed.<br><br>
+                    Open to connect on defense tech, CUAS, contested environments, or deployment challenges.<br><br>
+                    No ego — just results.
+                </div>
+                <div class="about-sig">— Chris Nordahl<br><span style="color:#aaa;font-size:13px;font-weight:normal;">Lancaster, CA &nbsp;|&nbsp; 34.8165°N, 118.2000°W</span></div>
+            </div>
+            <div class="ref-section">
+                <div class="ref-section-title">Technical Stack</div>
+                <div class="ref-row">
+                    <span class="ref-game">Rendering</span>
+                    <span class="ref-real">Mapbox GL JS — satellite + vector layers, dynamic GeoJSON sources for all units, projectiles, explosions, and sensor rings. Pitched 45° for operational depth.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Logic</span>
+                    <span class="ref-real">Vanilla ES6 JavaScript. Zero frameworks. Single 250ms update loop handling movement, sensor fusion, confidence scoring, intercept geometry, and autonomous tasking across all assets simultaneously.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Build Pipeline</span>
+                    <span class="ref-real">Python build script splits single-source HTML into modular JS files for GitHub Pages deployment. Keeps global constants synchronized across all modules.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Deployment</span>
+                    <span class="ref-real">GitHub Pages — lattice-runner.github.io. Live ADS-B data via OpenSky Network API. Audio via Dropbox CDN. Built and iterated off-grid on solar + Starlink.</span>
+                </div>
+                <div class="ref-row">
+                    <span class="ref-game">Methodology</span>
+                    <span class="ref-real">AI-assisted development as a deliberate workflow — not a shortcut. Every system was designed, debugged, and iterated intentionally. The sim models real constraints: sensor fusion delays, engagement envelopes, EW degradation, comms-denied autonomy.</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="hud">
+    <div style="font-weight:bold; font-size:14px; margin-bottom:8px; border-bottom:1px solid #333; padding-bottom:5px;">
+        LATTICERUNNER 21.11
+    </div>
+    <button id="pauseBtn" style="margin-bottom:5px; background:rgba(0,255,0,0.15);">START SYSTEM</button>
+    <button id="resetBtn" style="margin-bottom:5px;">RESET</button>
+    <!-- skipBtn kept hidden — relayed from music box skip button -->
+    <button id="skipBtn" style="display:none;"></button>
+    <button id="refToggleBtn">⬡ REFERENCE PANELS</button>
+    <hr style="border-color:#0f0; opacity:0.2; margin:8px 0;">
+    <button id="furyBtn" disabled style="color:#00ffff; border-color:#00ffff; background:rgba(0,255,255,0.15);">FURY AIR SUPPORT <span id="furyTimer" style="font-size:10px;color:#555;"></span></button>
+    <div class="btn-grid">
+        <button id="empBtn" disabled>EMP BLAST <span id="empTimer" style="font-size:10px;color:#555;"></span></button>
+        <button id="clgBtn" disabled>CLG GRID <span id="clgTimer" style="font-size:10px;color:#555;"></span></button>
+    </div>
+    <div class="btn-grid">
+        <button id="ttuBtn" disabled>TTU LINK <span id="ttuTimer" style="font-size:10px;color:#555;"></span></button>
+        <button id="orsBtn" disabled>ORS SCAN <span id="orsTimer" style="font-size:10px;color:#555;"></span></button>
+    </div>
+    <button id="jamBtn" disabled>SIMULATE JAMMING</button>
+    <button id="autoBtn" disabled style="color:#00ffaa; border-color:#00ffaa; background:rgba(0,255,170,0.1); margin-top:5px;">AUTO-TASKING: OFF</button>
+    <hr style="border-color:#0f0; opacity:0.2; margin:8px 0;">
+    <div style="font-size:10px; color:#555; letter-spacing:1px; margin-bottom:4px;">DRONE SQUADRONS</div>
+    <button id="altiusBtn" disabled style="color:#00ffcc; border-color:#00ffcc; background:rgba(0,255,136,0.1); margin-bottom:4px;">ALTIUS — ANTI-UAS <span id="altiusTimer" style="font-size:10px;color:#555;"></span></button>
+    <button id="anvilBtn"  disabled style="color:#cc44ff; border-color:#cc44ff; background:rgba(204,68,255,0.1); margin-bottom:4px;">ANVIL — STRIKE DRONE <span id="anvilTimer" style="font-size:10px;color:#555;"></span></button>
+    <button id="rrDeployBtn" disabled style="color:#00ffff; border-color:#00ffff; background:rgba(0,255,255,0.1);">ROADRUNNER — INTERCEPTOR <span id="rrTimer" style="font-size:10px;color:#555;"></span></button>
+</div>
+
+<div id="nowPlaying">
+    <div style="color:#555; font-size:10px; letter-spacing:1px; margin-bottom:4px;">NOW PLAYING</div>
+    <div id="np-artist">Awaiting Input...</div>
+    <div id="np-track-mask">
+        <div class="song-title-container" id="np-track">System Offline</div>
+    </div>
+    <div id="music-controls">
+        <button id="musicPauseBtn" onclick="toggleMusicPause()">⏸</button>
+        <button id="skipMusicBtn" onclick="document.getElementById('skipBtn').click()">⏭</button>
+        <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.5"
+               oninput="document.getElementById('bgMusic').volume = this.value">
+        <span style="font-size:10px; color:#555;">VOL</span>
+    </div>
+</div>
+
+<div id="recommendationBox">
+    <span style="font-weight:bold; color:#00ffff;">TACTICAL AI:</span><br>
+    <span id="recommendationText" style="color:#0f0; font-weight:bold; font-size:12px;">SYSTEM OFFLINE.</span>
+</div>
+
+<div id="roadrunnerStatus">
+    <span style="font-weight:bold; color:#00ffaa; margin-bottom:6px; display:block;">DRONE SQUADRON STATUS:</span>
+</div>
+
+<div id="telemetry">
+    <span id="esysStatus">E-System: UNINITIALIZED</span><br>
+    <span id="furyStatus" style="color:#00ffff;">Air Support: UNINITIALIZED</span><br>
+    <span id="clgStatus">CLG: UNINITIALIZED</span> | <span id="ttuStatus">TTU: UNINITIALIZED</span><br>
+    <span id="orsStatus">ORS: UNINITIALIZED</span><br>
+    <span id="altiusStatus" style="color:#00ffcc;">ALTIUS: UNINITIALIZED</span> |
+    <span id="anvilStatus"  style="color:#cc44ff;">ANVIL: UNINITIALIZED</span><br>
+    <span id="rrDeployStatus" style="color:#00ffff;">RR DEPLOY: UNINITIALIZED</span>
+</div>
+
+<div id="killfeed">Awaiting Tactical Input...<br></div>
+<audio id="bgMusic" preload="auto"></audio>
+
+
+<!-- Mapbox GL JS -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+
+<!-- Game scripts — load order matters -->
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/map.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/units.js"></script>
+<script src="js/update.js"></script>
+<script src="js/refresh.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
