@@ -1,50 +1,64 @@
 # 🛡️ LATTICERUNNER // Autonomous C2 Simulation
 
-**Live Demo:** [https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/](https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/)
+**Live Demo:** [https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/](https://lattice-runner.github.io/LATTICERUNNER-C2-Sim/)  
+**Current Version:** 21.11 — STABILITY HOTFIX
 
-LATTICERUNNER is a modular **Command & Control (C2)** simulation designed to visualize the technical and logistical constraints of **Distributed Sensor-to-Shooter Networks**.
+LATTICERUNNER is a browser-based, real-time **autonomous networked defense simulation** that emulates a Lattice-style command node. Defend a fixed high-value asset against escalating waves of hostile UAS swarms, loitering munitions, and strike aircraft (including jet-launched air-to-ground missiles) using distributed sensors, autonomous interceptors, electronic warfare, and on-call air support — all coordinated through a software-defined mesh with minimal human input.
 
-I built this project to bridge the gap between **Field Operations** and **Edge Software Engineering**. It models the autonomous coordination required for high-threat environments where human reaction time is the bottleneck.
+Built to surface real-world constraints: sensor fusion delays, classification confidence tiers, thermal/power limits on directed energy, comms jamming effects, altitude-specific engagement envelopes, and autonomous fallback when the operator or link is denied.
 
-## Advanced Engineering Concepts
+## Featured Capabilities (v21.11)
 
-### A. Modular C2 Architecture
+- **Persistent XRST Network** — 4 fixed Extended Range Sentry Towers (XRST-01–04) provide autonomous detection & classification out to ~7.5 mi. Towers go offline if physically breached.
+- **Tiered IFF Pipeline** — Contacts progress UNKNOWN → SUSPECT → HOSTILE via multi-sensor confidence accumulation  
+  (radar +5/tick, XRST +15/tick, EO/IR cone +35/tick, EO/IR ambient +15/tick, ground detect +20/tick, time-on-track bonus)
+- **Drone Squadrons**
+  - ALTIUS — fast anti-UAS kamikaze swarm (targets packets/FPV)
+  - ANVIL — heavier attrition strike drones
+  - ROADRUNNER — precision surface-to-air interceptors (limited altitude envelope)
+- **Effector Suite**
+  - EMP INTERDICTION — wide-area RF pulse (inner kill zone + outer disruption ring)
+  - CLG GRID — close-in laser defense perimeter (thermal-limited, ~8 kills max per activation)
+  - FURY AIR SUPPORT — on-demand autonomous CAS jets with air-to-air/ground missiles
+  - TTU LINK — temporary mesh uplink boost (improves packet intercept probability)
+  - ORS SCAN — orbital ISR refresh (recovers downed XRST towers, accelerates enemy approach as trade-off)
+- **Live ADS-B Integration** — Real transponder data from OpenSky Network overlaid on the operational picture. Live (neutral) aircraft over Edwards AFB airspace rendered in real time.
+- **Electronic Warfare Realism** — Simulated adversary jamming/ECM degrades EO/IR and TTU link; nodes fall back to local autonomy
+- **Countermeasures & Evasion** — High-value threats deploy flares to break Roadrunner locks; jets perform evasion maneuvers when threatened
+- **Persistent UI Elements** — Wave count, total kills, active assets, base integrity %, current streak, tactical AI recommendations, kill feed, glitch/jam FX, music marquee with volume controls
 
-The project has been refactored from a monolithic prototype into a modular system. This mirrors real-world defense software by isolating core logic into specialized domains:
+## Core Engineering Concepts
 
-- **Sensor Mesh** (`map.js`): Manages the **Common Operating Picture (COP)**
-- **Effector Logic** (`units.js`): Governs autonomous interceptor behaviors
-- **State Pipeline** (`update.js`): A high-frequency loop for real-time telemetry
-- **Build Automation** (`build.py`): A Python-based pipeline to synchronize global state across modules
+### Modular C2 Architecture
+- **Sensor Mesh** — fused Common Operating Picture via XRST + drone EO/IR + ground layer
+- **Effector Rules** — autonomous ROE, engagement envelopes, thermal/cooldown limits
+- **State Tick** — 250 ms high-frequency simulation loop handling movement, confidence, intercepts, breaches
+- **Build Pipeline** — Python script keeps global constants synchronized across modules
 
-### B. XRST Sensor Fusion & IFF
+### Sensor Fusion & Classification
+Multi-layer confidence scoring per tick:
+- RADAR (wide coverage, low confidence) + XRST towers (medium range) + drone EO/IR cone (high confidence directional) + ground acoustic/seismic (low-alt only)
+- Full HOSTILE authorization requires ≥80 confidence
 
-The simulation features a persistent **Extended Range Sentry Tower (XRST)** network.
-
-- **Autonomous Classification**: Threats are identified through a tiered pipeline (`UNKNOWN → SUSPECT → HOSTILE`) based on XRST proximity
-- **System Resilience**: If an XRST tower is physically breached, it goes offline, creating **"Sensor Blind Spots"** that require an **ORS (Orbital Reconnaissance)** pass to restore
-
-### C. 3D Airspace Deconfliction & NOE Flight
-
-The simulation handles heterogeneous threats with unique 3D profiles:
-
-- **Nap-of-the-earth (NOE)**: FPV swarms maintain low-altitude (20m) profiles to utilize terrain masking
-- **Kinetic Intercept Envelopes**: Roadrunner interceptors only engage within a specific altitude "slice" (`ALT_MISSILE_ENVELOPE`), simulating the physical limitations of surface-to-air effectors
-- **Countermeasures**: High-value threats like the **J-20** strike package utilize flares to break autonomous locks, forcing the C2 mesh to re-acquire the track
+### 3D Threat & Engagement Realism
+- NOE flight for FPV swarms (~low altitude terrain masking)
+- Altitude-based envelopes: Roadrunner missiles ineffective above ~500 m; base breach requires <50 m
+- Jet ingress at high altitude → terminal missile dive
+- Flares break locks → temporary Roadrunner re-acquisition delay
 
 ## Technical Stack
 
-- **Visuals**: Mapbox GL JS (Geospatial vector rendering)
-- **Logic**: Vanilla ES6 JavaScript (High-performance, framework-free state management)
-- **DevOps**: Python 3 (Modular build and extraction pipeline)
-- **Audio**: HTML5 Audio API (Situational awareness and killstreak feedback)
+- **Rendering** → Mapbox GL JS (satellite + vector layers, dynamic sources for units/projectiles/explosions)
+- **Logic** → Vanilla ES6 JavaScript (zero-framework, single update loop)
+- **Audio** → HTML5 `<audio>` + Web Speech Synthesis (voice alerts + dynamic playlist)
+- **UI/Effects** — CSS glassmorphism HUD, glitch animations, marquee track titles, pulsing indicators
 
-## Mission Alignment
+## Mission Context
 
-I am a **Field Operator** and **Logistician** based in the High Desert (Lancaster, CA). I hold a **CDL Class A** and have extensive experience in austere environments. I taught myself to code because I believe the future of defense depends on operators who can both climb a tower to fix a sensor and SSH into the box to debug the kernel.
+I’m a field operator/logistician based in the High Desert near Edwards AFB. CDL Class A, years working austere sites — climbing towers, troubleshooting RF in the dirt, moving heavy gear under time pressure.
+
+I taught myself to code because I believe the future of defense depends on operators who can both climb a tower to fix a sensor and SSH into the box to debug the kernel.
 
 - **Timeline**: Focused on rapid capability scaling for the **2027 mission window**
 - **Status**: Ready to deploy immediately
-
-> **Note:** This is a conceptual prototype running client-side. Real-world implementation would require server-side sensor fusion and encrypted data links.
 
