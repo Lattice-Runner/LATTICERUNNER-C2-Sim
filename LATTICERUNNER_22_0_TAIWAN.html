@@ -881,13 +881,13 @@
     #taskingConsolePanel {
         position: fixed;
         top: 60px;
-        left: 340px;
-        width: 320px;
+        left: 390px;
+        width: 340px;
         max-height: calc(100vh - 80px);
         overflow-y: auto;
-        border: 1px solid #00ffaa44;
+        border: 1px solid #00ff41;
         border-radius: 6px;
-        padding: 12px;
+        padding: 14px;
         background: rgba(0,4,0,0.97);
         backdrop-filter: blur(16px);
         z-index: 400;
@@ -897,25 +897,25 @@
     @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:none; } }
     @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
     .tasking-card {
-        border: 1px solid #0f0;
+        border: 1px solid #00ff41;
         border-radius: 5px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
         background: rgba(0,0,0,0.3);
     }
     .tasking-header {
-        font-size: 13px;
+        font-size: 15px;
         font-weight: bold;
         letter-spacing: 2px;
-        margin-bottom: 7px;
+        margin-bottom: 8px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
     .tasking-status {
-        font-size: 10px;
+        font-size: 11px;
         letter-spacing: 1px;
-        padding: 2px 6px;
+        padding: 2px 7px;
         border-radius: 2px;
         background: rgba(0,255,170,0.1);
         color: #00ffaa;
@@ -925,22 +925,22 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
     .tasking-label {
-        font-size: 11px;
-        color: #666;
+        font-size: 12px;
+        color: #777;
         letter-spacing: 1px;
-        min-width: 70px;
+        min-width: 76px;
     }
     .tasking-select {
         background: rgba(0,0,0,0.6);
-        border: 1px solid #0f0;
+        border: 1px solid #00ff41;
         border-radius: 3px;
-        color: #0f0;
-        font-size: 11px;
+        color: #00ff41;
+        font-size: 12px;
         font-family: monospace;
-        padding: 3px 6px;
+        padding: 4px 7px;
         flex: 1;
         letter-spacing: 0.5px;
         cursor: pointer;
@@ -5994,6 +5994,15 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
                 if (dayNumber === 2 && hualienDegraded) {
                     addKill(`<span style="color:#ff4444;">⚠ HUALIEN STATUS:</span> Air base remains degraded. F-16V sortie capacity halved.`);
                 }
+
+                // Clear dead drones from squads so autodeploy triggers fresh on new day
+                altiusSquad  = altiusSquad.filter(d => d.alive);
+                anvilSquad   = anvilSquad.filter(d => d.alive);
+                rrSquad      = rrSquad.filter(d => d.alive);
+                // Force ready flags so Lattice deploys immediately on day start
+                if (!altiusReady)   altiusReady   = Date.now() - altiusLastTs   >= ALTIUS_COOLDOWN_MS;
+                if (!anvilReady)    anvilReady    = Date.now() - anvilLastTs    >= ANVIL_COOLDOWN_MS;
+                if (!rrDeployReady) rrDeployReady = Date.now() - rrDeployLastTs >= RR_DEPLOY_COOLDOWN_MS;
 
                 showSupportModal(dayNumber - 1);
     }
