@@ -2058,7 +2058,7 @@
     // ============================================================
     // FRIENDLY DRONE SQUAD CONSTANTS
     // ============================================================
-    const ALTIUS_COOLDOWN_MS  = 45000;   // anti-UAS kamikaze, fast cooldown
+    const ALTIUS_COOLDOWN_MS  = 45000;   // anti-UAS kamikaze
     const ALTIUS_COUNT        = 15;      // drones per launch
     const ALTIUS_SPEED        = 0.0014;  // fast, targets swarm drones only
 
@@ -2066,7 +2066,7 @@
     const ANVIL_COUNT         = 8;
     const ANVIL_SPEED         = 0.0010;  // targets strike drones and cruise missiles
 
-    const RR_DEPLOY_COOLDOWN_MS = 90000; // precision interceptor, expensive
+    const RR_DEPLOY_COOLDOWN_MS = 90000; // precision interceptor
     const RR_DEPLOY_COUNT       = 2;
     const RR_DEPLOY_SPEED       = 0.0018; // fast, targets jets and missiles only
 
@@ -6726,6 +6726,11 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
         altiusSquad = altiusSquad.filter(d => d.alive);
         anvilSquad  = anvilSquad.filter(d => d.alive);
         rrSquad     = rrSquad.filter(d => d.alive);
+
+        // Reset ready flags when cooldown expires — critical for continuous autodeploy
+        if (!altiusReady   && now - altiusLastTs   >= ALTIUS_COOLDOWN_MS)   altiusReady   = true;
+        if (!anvilReady    && now - anvilLastTs    >= ANVIL_COOLDOWN_MS)    anvilReady    = true;
+        if (!rrDeployReady && now - rrDeployLastTs >= RR_DEPLOY_COOLDOWN_MS) rrDeployReady = true;
 
         // ── WALL CLOCK DAY TRIGGER ──────────────────────────────
         // When real time expires, advance the day immediately then spawn the wave
