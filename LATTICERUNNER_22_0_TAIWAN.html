@@ -6818,8 +6818,8 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
         const lat = (loLat + hiLat) / 2;
         const lon = (loLng + hiLng) / 2;
         const sources = [
-            `https://api.airplanes.live/v2/lat/${lat}/lon/${lon}/dist/200`,
-            `https://api.adsb.one/v2/lat/${lat}/lon/${lon}/dist/200`,
+            `https://corsproxy.io/?${encodeURIComponent('https://api.airplanes.live/v2/lat/' + lat + '/lon/' + lon + '/dist/200')}`,
+            `https://corsproxy.io/?${encodeURIComponent('https://api.adsb.one/v2/lat/' + lat + '/lon/' + lon + '/dist/200')}`,
         ];
         for (const url of sources) {
             try {
