@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LATTICERUNNER — Taiwan Strait Defense System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400&display=swap');
+
+:root {
+    --green:   #00ff88;
+    --dim:     #00aa55;
+    --red:     #ff3344;
+    --gold:    #ffcc44;
+    --blue:    #4499ff;
+    --bg:      #020408;
+    --panel:   rgba(0,255,136,0.03);
+    --border:  rgba(0,255,136,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--bg);
+    color: #ddd;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+        linear-gradient(rgba(0,255,136,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+}
+
+/* ── SCAN LINE ── */
+body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none; z-index: 0;
+}
+
+.wrap {
+    position: relative; z-index: 1;
+    max-width: 960px; margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ── HEADER ── */
+header {
+    padding: 48px 0 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+}
+
+.header-top {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
+.classification {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--green); opacity: 0.6;
+    margin-bottom: 20px;
+}
+
+.title-block h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(52px, 8vw, 88px);
+    line-height: 0.9;
+    letter-spacing: -1px;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.title-block h1 span {
+    color: var(--green);
+    display: block;
+}
+
+.title-block .sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--dim); margin-top: 16px;
+}
+
+.status-cluster {
+    text-align: right;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: #aaa;
+    letter-spacing: 1px; line-height: 2;
+    padding-top: 4px;
+}
+
+.status-cluster .live {
+    color: var(--green);
+    animation: blink 1.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+}
+
+/* ── MISSION STATEMENT ── */
+.mission {
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.mission p {
+    font-size: 16px; line-height: 1.9; color: #ddd;
+    max-width: 680px;
+}
+
+.mission p strong { color: #fff; font-weight: 500; }
+
+.csis-badge {
+    display: inline-block; margin-top: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 2px;
+    color: var(--gold); opacity: 0.9;
+    border: 1px solid rgba(255,204,68,0.2);
+    padding: 4px 10px; border-radius: 2px;
+}
+
+/* ── TOOL CARDS ── */
+.tools {
+    padding: 48px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 680px) {
+    .tools { grid-template-columns: 1fr; }
+    .header-top { flex-direction: column; gap: 24px; }
+    .status-cluster { text-align: left; }
+}
+
+.tool-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px;
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, background 0.2s;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.tool-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity 0.2s;
+}
+
+.tool-card:hover { border-color: var(--accent); background: rgba(0,255,136,0.05); }
+.tool-card:hover::before { opacity: 1; }
+
+.tool-card.primary   { --accent: var(--green); }
+.tool-card.secondary { --accent: var(--blue); border-color: rgba(68,153,255,0.15); background: rgba(68,153,255,0.02); }
+.tool-card.secondary:hover { border-color: var(--blue); background: rgba(68,153,255,0.05); }
+
+.tool-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 2px;
+    color: var(--accent); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.tool-tag::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--accent); opacity: 0.2;
+}
+
+.tool-card h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 26px;
+    color: #fff; letter-spacing: 0.5px;
+    line-height: 1.1; margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.tool-card .version {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: #aaa;
+    margin-bottom: 16px; letter-spacing: 1px;
+}
+
+.tool-card p {
+    font-size: 13px; line-height: 1.75;
+    color: #ccc; flex: 1; margin-bottom: 24px; font-size: 14px;
+}
+
+.tool-features {
+    list-style: none; margin-bottom: 24px;
+}
+
+.tool-features li {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: #aaa;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+    padding-left: 14px; position: relative;
+}
+
+.tool-features li::before {
+    content: '▸'; position: absolute; left: 0;
+    color: var(--accent); opacity: 0.6;
+}
+
+.launch-btn {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--accent); text-decoration: none;
+    transition: background 0.15s;
+}
+
+.launch-btn:hover { background: rgba(0,255,136,0.08); }
+.tool-card.secondary .launch-btn:hover { background: rgba(68,153,255,0.08); }
+
+.launch-arrow {
+    font-size: 14px; transition: transform 0.15s;
+}
+.launch-btn:hover .launch-arrow { transform: translateX(4px); }
+
+/* ── STATS ROW ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 48px;
+}
+
+@media (max-width: 580px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-cell {
+    background: rgba(0,12,0,0.8);
+    padding: 20px 16px;
+    text-align: center;
+}
+
+.stat-cell .num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 28px;
+    color: var(--green); line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: 0 0 12px rgba(0,255,136,0.5);
+}
+
+.stat-cell .label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 1.5px;
+    color: #bbb; text-transform: uppercase;
+    line-height: 1.4;
+}
+
+/* ── FRAMEWORK SECTION ── */
+.framework {
+    border-top: 1px solid var(--border);
+    padding: 40px 0;
+}
+
+.framework-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: #888; margin-bottom: 24px;
+}
+
+.framework-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 580px) {
+    .framework-grid { grid-template-columns: 1fr; }
+}
+
+.fw-item {
+    padding: 16px;
+    border: 1px solid #0f1a0f;
+    border-radius: 4px;
+}
+
+.fw-item .fw-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 36px;
+    color: #1e3e1e; line-height: 1;
+    margin-bottom: 8px;
+}
+
+.fw-item .fw-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 13px;
+    color: #ddd; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 6px;
+}
+
+.fw-item .fw-desc {
+    font-size: 12px; color: #aaa; line-height: 1.7;
+}
+
+/* ── FOOTER ── */
+footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0 40px;
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 12px;
+}
+
+.footer-left {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: #777; letter-spacing: 1px;
+    line-height: 1.8;
+}
+
+.footer-right {
+    display: flex; gap: 16px; align-items: center;
+}
+
+.footer-link {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: #ddd; letter-spacing: 1px;
+    text-decoration: none; transition: color 0.15s;
+}
+.footer-link:hover { color: var(--green); }
+
+/* ── INTRO ANIMATION ── */
+.fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.6s ease forwards;
+}
+.fade-in:nth-child(2) { animation-delay: 0.1s; }
+.fade-in:nth-child(3) { animation-delay: 0.2s; }
+.fade-in:nth-child(4) { animation-delay: 0.3s; }
+.fade-in:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Corner decoration */
+.corner-dec {
+    position: absolute; top: 0; right: 0;
+    width: 60px; height: 60px;
+    border-top: 1px solid var(--accent);
+    border-right: 1px solid var(--accent);
+    opacity: 0.3; border-radius: 0 6px 0 0;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <header class="fade-in">
+        <div class="classification">// UNCLASSIFIED // OPEN SOURCE ANALYSIS // LATTICERUNNER v22-24 //</div>
+        <div class="header-top">
+            <div class="title-block">
+                <h1>LATTICE<span>RUNNER</span></h1>
+                <div class="sub">TAIWAN STRAIT DEFENSE SIMULATION SUITE // 25.0400°N 121.5120°E</div>
+            </div>
+            <div class="status-cluster">
+                <div class="live">● LIVE ADS-B FEED</div>
+                <div>MAPBOX GL JS v3.3</div>
+                <div>CSIS FRAMEWORK 2023</div>
+                <div>BUILD 22.0 / 24.0</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="mission fade-in">
+        <p>
+            An open-source analytical simulation suite built on the
+            <strong>CSIS "First Battle of the Next War" (2023)</strong> wargame framework.
+            Models PLA amphibious assault, US carrier strike group operations,
+            Anduril Lattice autonomous coordination, and the economic consequences of
+            Taiwan Strait conflict — from a single browser tab, no installation required.
+        </p>
+        <div class="csis-badge">SOURCE: CSIS / CNAS PUBLIC WARGAME FINDINGS // NOT AFFILIATED WITH CSIS OR ANDURIL INDUSTRIES</div>
+    </div>
+
+    <div class="stats-row fade-in">
+        <div class="stat-cell">
+            <div class="num">23</div>
+            <div class="label">PLAN Naval<br>Vessels Modeled</div>
+        </div>
+        <div class="stat-cell">
+            <div class="num">12</div>
+            <div class="label">Assumption<br>Audit Parameters</div>
+        </div>
+        <div class="stat-cell">
+            <div class="num">500</div>
+            <div class="label">Max Monte Carlo<br>Runs per Batch</div>
+        </div>
+        <div class="stat-cell">
+            <div class="num">8</div>
+            <div class="label">Force Availability<br>Levers</div>
+        </div>
+    </div>
+
+    <div class="tools fade-in">
+
+        <div class="tool-card primary" onclick="window.location='LATTICERUNNER_22_0_TAIWAN.html'">
+            <div class="corner-dec"></div>
+            <div class="tool-tag">INTERACTIVE SIMULATION // v22.0</div>
+            <h2>Taiwan Strait<br>Defense</h2>
+            <div class="version">LATTICERUNNER_22_0_TAIWAN.html</div>
+            <p>
+                Real-time defense simulation on live Mapbox terrain. Command
+                Anduril autonomous interceptors, manage carrier strike group
+                operations, and defend the Presidential Office against PLA
+                multi-domain assault across air, naval, and amphibious axes.
+            </p>
+            <ul class="tool-features">
+                <li>Live ADS-B transponder feed over Taiwan airspace</li>
+                <li>PLA adaptive AI — shifts composition based on your counters</li>
+                <li>Full naval OOB: 12 PLAN + 10 US/Allied vessels</li>
+                <li>VLS depletion, Japan basing, Guam withdrawal cycle</li>
+                <li>Economy of Force ledger — real-time cost tracking</li>
+                <li>CSIS policy brief modals on all key assets</li>
+            </ul>
+            <a class="launch-btn" href="LATTICERUNNER_22_0_TAIWAN.html">
+                LAUNCH SIMULATION <span class="launch-arrow">→</span>
+            </a>
+        </div>
+
+        <div class="tool-card secondary" onclick="window.location='LATTICERUNNER_23_0_MONTECARLO.html'">
+            <div class="corner-dec" style="--accent:var(--blue)"></div>
+            <div class="tool-tag" style="color:var(--blue)">ANALYTICAL TOOL // v24.0</div>
+            <h2>Wargame<br>Simulator</h2>
+            <div class="version">LATTICERUNNER_23_0_MONTECARLO.html</div>
+            <p>
+                Tabletop-parity Monte Carlo engine modeled on the CSIS
+                wargame framework with real-world force availability updates.
+                Run up to 500 iterations, model Iran contingency CSG constraints,
+                submarine warfare, air superiority contests, and generate
+                structured JSON exports for policy analysis.
+            </p>
+            <ul class="tool-features" style="--accent:var(--blue)">
+                <li>Force availability: CSG count, SSNs, ROCAF readiness, LRASM staging</li>
+                <li>Iran/multi-theater preset — single CSG constraint modeled</li>
+                <li>Air war layer: F-16V vs PLAAF daily attrition, J-20 threat, F-35B</li>
+                <li>Submarine warfare: SSN torpedo ops, PLAN ASW counter-detection</li>
+                <li>CSG standoff vs. forward posture — DF-21D exposure tradeoff</li>
+                <li>Sensitivity ranking across 12 parameters via Pearson r</li>
+                <li>A/B comparison with cost-efficiency shift analysis</li>
+                <li>Nuclear escalation threshold + auto-generated analytical narrative</li>
+            </ul>
+            <a class="launch-btn" href="LATTICERUNNER_23_0_MONTECARLO.html" style="border-color:var(--blue);color:var(--blue)">
+                OPEN ANALYTICAL TOOL <span class="launch-arrow">→</span>
+            </a>
+        </div>
+
+        <div class="tool-card secondary" onclick="window.location='LATTICERUNNER_24_0_TABLETOP.html'">
+            <div class="corner-dec" style="--accent:#ff5555"></div>
+            <div class="tool-tag" style="color:#ff5555">TURN-BASED WARGAME // v24.0</div>
+            <h2>CSIS<br>Tabletop</h2>
+            <div class="version">LATTICERUNNER_24_0_TABLETOP.html</div>
+            <p>
+                Turn-based strategic wargame calibrated to the CSIS "First Battle
+                of the Next War" (2023) tabletop findings. Each turn represents
+                one day of a Chinese amphibious invasion. You make policy decisions,
+                allocate forces, and resolve combat against an adaptive PLA AI.
+                10 days to survive. Japan basing is the decisive variable.
+            </p>
+            <ul class="tool-features" style="--accent:#ff5555">
+                <li>Turn-based: Decision Phase → Combat Resolution → Assessment</li>
+                <li>Strategic choices: Japan basing, CSG posture, air priority, HIMARS, B-21</li>
+                <li>138-ship PLA fleet with individual hull tracking</li>
+                <li>5 landing zones with troop accumulation and ground assault</li>
+                <li>SSN torpedo ops, VLS depletion, carrier withdrawal cycle</li>
+                <li>Nuclear shadow threshold — CSIS escalation dynamics</li>
+                <li>Full economy of force ledger with per-side cost tracking</li>
+                <li>PLAN fleet withdrawal when losses exceed stochastic threshold</li>
+            </ul>
+            <a class="launch-btn" href="LATTICERUNNER_24_0_TABLETOP.html" style="border-color:#ff5555;color:#ff5555">
+                PLAY TABLETOP WARGAME <span class="launch-arrow">→</span>
+            </a>
+        </div>
+
+    </div>
+        <div class="framework-title">// ANALYTICAL FRAMEWORK</div>
+        <div class="framework-grid">
+            <div class="fw-item">
+                <div class="fw-num">01</div>
+                <div class="fw-title">CSIS Wargame Basis</div>
+                <div class="fw-desc">Order of battle, landing zone timing, and outcome probabilities derived from CSIS "First Battle of the Next War" (2023) — 24 wargame iterations. The Monte Carlo engine extends this with force availability modeling not present in the published CSIS work, including Iran contingency constraints and pre-conflict readiness states.</div>
+            </div>
+            <div class="fw-item">
+                <div class="fw-num">02</div>
+                <div class="fw-title">Anduril Lattice Layer</div>
+                <div class="fw-desc">Sensor fusion pipeline (UNKNOWN→SUSPECT→HOSTILE), autonomous interceptor tasking, and multi-domain coordination model Lattice C2 architecture as described in public Anduril documentation.</div>
+            </div>
+            <div class="fw-item">
+                <div class="fw-num">03</div>
+                <div class="fw-title">Economic Modeling</div>
+                <div class="fw-desc">Market index decay, TSMC semiconductor disruption, and GDP impact estimates sourced from Rhodium Group and CSIS economic appendix. Civilian displacement scaled to Taipei metro population of 2.7M.</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="fade-in">
+        <div class="footer-left">
+            LATTICERUNNER // OPEN SOURCE // UNCLASSIFIED<br>
+            NOT AFFILIATED WITH CSIS, ANDURIL INDUSTRIES, OR THE US GOVERNMENT<br>
+            BASED ON PUBLICLY AVAILABLE WARGAME FINDINGS
+        </div>
+        <div class="footer-right">
+            <a class="footer-link" href="https://github.com/Lattice-Runner/LATTICERUNNER-C2-Sim" target="_blank">GITHUB</a>
+            <a class="footer-link" href="https://www.csis.org/analysis/first-battle-next-war" target="_blank">CSIS SOURCE</a>
+        </div>
+    </footer>
+
+</div>
+</body>
+</html>
