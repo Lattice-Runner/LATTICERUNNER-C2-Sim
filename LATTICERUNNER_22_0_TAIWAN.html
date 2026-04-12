@@ -1496,6 +1496,58 @@
         transform: translateY(-1px);
     }
 
+    /* ── CRISIS EVENT MODAL ── */
+    #crisisModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(10,14,20,0.95);
+        z-index: 10002;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(6px);
+    }
+    #crisisModal.visible { display: flex; }
+    .crisis-card {
+        background: #161b22;
+        border: 2px solid #f0882e;
+        border-radius: 8px;
+        padding: 32px;
+        max-width: 560px;
+        width: 90%;
+        box-shadow: 0 0 60px rgba(240,136,62,0.15);
+        animation: crisisSlamIn 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+    }
+    @keyframes crisisSlamIn { from { transform: scale(0.8) translateY(-30px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .crisis-header { font-size: 10px; letter-spacing: 4px; color: #f0882e; margin-bottom: 8px; text-transform: uppercase; font-family: monospace; }
+    .crisis-title { font-size: 22px; font-weight: 700; color: #e6edf3; margin-bottom: 12px; line-height: 1.3; }
+    .crisis-body { font-size: 12px; color: #8b949e; line-height: 1.8; margin-bottom: 20px; }
+    .crisis-effect { font-size: 11px; padding: 10px 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; margin-bottom: 20px; line-height: 1.7; font-family: monospace; }
+    .crisis-effect .eff-neg { color: #ff4444; }
+    .crisis-effect .eff-pos { color: #3bcb86; }
+    .crisis-choices { display: flex; gap: 10px; flex-wrap: wrap; }
+    .crisis-choice-btn {
+        flex: 1; min-width: 200px; padding: 12px 16px;
+        font-family: monospace; font-size: 11px; font-weight: 600;
+        letter-spacing: 1px; border-radius: 4px; cursor: pointer;
+        transition: all 0.15s; text-align: left; line-height: 1.5;
+    }
+    .crisis-choice-btn.opt-a { background: rgba(77,208,200,0.08); border: 1px solid #4dd0c8; color: #4dd0c8; }
+    .crisis-choice-btn.opt-b { background: rgba(255,68,68,0.08); border: 1px solid #ff4444; color: #ff4444; }
+    .crisis-choice-btn.opt-c { background: rgba(255,200,87,0.08); border: 1px solid #ffc857; color: #ffc857; }
+    .crisis-choice-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .crisis-choice-label { font-size: 9px; letter-spacing: 1px; opacity: 0.7; display: block; margin-bottom: 4px; }
+
+    @media (max-width: 768px) {
+        .crisis-card { padding: 20px 16px; }
+        .crisis-title { font-size: 18px; }
+        .crisis-body { font-size: 11px; }
+        .crisis-effect { font-size: 10px; }
+        .crisis-choices { flex-direction: column; }
+        .crisis-choice-btn { min-width: 0; font-size: 10px; padding: 10px 12px; }
+    }
+
     /* Amphibious units */
     #amphibiousBtn {
         width: 100%;
@@ -3828,6 +3880,9 @@
 </div>
 
 <!-- Command Points Modal — shown after US Support selection -->
+<!-- CRISIS EVENT MODAL -->
+<div id="crisisModal"><div class="crisis-card" id="crisisCard"></div></div>
+
 <div id="cpModal">
     <div class="cp-modal-inner">
         <h2>⬡ COMMAND POINTS</h2>
@@ -7610,6 +7665,179 @@
     let baseHealth       = 6;   // base survives this many breaches before game over (+1 for drone friction)
     let highestStreak    = 0;
     let sessionHighStreak = 0;
+
+    // ═══════════════════════════════════════════
+    //  MID-DAY CRISIS EVENT SYSTEM
+    //  Ported from LATTICERUNNER 24.0 Tabletop
+    //  Fires at the 1-minute mark of each in-game day
+    // ═══════════════════════════════════════════
+    function crisisProb(p) { return Math.random() < p; }
+    function crisisRng(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+
+    // ── US CRISIS EVENTS (shown when playing US/Coalition) ──
+    const US_CRISIS_EVENTS = [
+        { id:'tsmc_strike', day:[4,5,6], once:true, title:'⚠ TSMC FAB COMPLEX UNDER FIRE', body:'PLA precision munitions have struck the TSMC Hsinchu campus. Three advanced EUV fabs are burning. Global semiconductor supply chain faces catastrophic disruption.', effect:'<span class="eff-neg">Base integrity -1</span> · <span class="eff-neg">Global economic damage</span>',
+            choices: [
+                { label:'ACCEPT LOSSES', desc:'Divert no forces. Semiconductor damage is done.', cls:'opt-b', apply:()=>{ baseHealth = Math.max(1, baseHealth - 1); addKill('<span style="color:#ff4444;font-weight:bold;">💥 TSMC:</span> Hsinchu fabs destroyed. Global chip supply catastrophically disrupted. Base integrity −1.'); } },
+                { label:'DIVERT F-16 CAP', desc:'CAP over remaining fabs. -4 F-16V sorties from combat pool.', cls:'opt-a', apply:()=>{ INVENTORY.f16v.remaining = Math.max(0, INVENTORY.f16v.remaining - 4); addKill('<span style="color:#4dd0c8;font-weight:bold;">✈ F-16V CAP:</span> 4 sorties diverted to TSMC air defense. Remaining: ' + INVENTORY.f16v.remaining); } },
+            ]},
+        { id:'cnn_broadcast', day:[2,3,4], once:true, title:'📺 CNN BROADCAST — CIVILIAN CASUALTIES', body:'A CNN crew embedded in Taipei broadcasts real-time footage of missile impacts on residential areas. Congressional pressure mounting. International outcry demands response.', effect:'<span class="eff-neg">Escalation pressure</span> · Political capital shifting',
+            choices: [
+                { label:'MEASURED RESPONSE', desc:'Issue statement. Maintain posture. Avoid escalation.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">🕊 DIPLOMACY:</span> Measured response to civilian casualties. Political pressure absorbed.'); } },
+                { label:'EXPANDED STRIKES', desc:'Hit mainland staging areas. Sink transports but escalation surge.', cls:'opt-b', apply:()=>{ const amphs = PLAN_SAG.filter(s => s.alive && s.isAmph); const k = Math.min(2, amphs.length); for(let i=0;i<k;i++){amphs[i].alive=false; amphs[i].hp=0;} addKill('<span style="color:#ff4444;font-weight:bold;">💥 RETALIATORY STRIKES:</span> ' + k + ' PLAN amphibious ships destroyed in mainland staging area strikes. ⚠ Major escalation.'); } },
+                { label:'MEDIA BLACKOUT', desc:'Cut feeds. Reduces political pressure, damages credibility.', cls:'opt-c', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">📺 MEDIA BLACKOUT:</span> Feeds cut. Political pressure reduced but international credibility damaged.'); } },
+            ]},
+        { id:'pla_socom', day:[3,4,5], once:true, title:'🔪 PLA SOF — HUALIEN SABOTAGE', body:'PLA special forces infiltrated via submarine have attacked Hualien Air Base. Runway cratering charges planted. QRF engaging.', effect:'<span class="eff-neg">Runway may be cratered</span> · <span class="eff-neg">F-16V sorties at risk</span>',
+            choices: [
+                { label:'QRF RESPONSE', desc:'Deploy garrison. 70% chance of neutralizing before detonation.', cls:'opt-a', apply:()=>{ if(crisisProb(0.70)){addKill('<span style="color:#3bcb86;font-weight:bold;">🔪 SOF NEUTRALIZED:</span> QRF engaged PLA special forces. Hualien secure.');}else{const l=crisisRng(3,6); INVENTORY.f16v.remaining=Math.max(0,INVENTORY.f16v.remaining-l); addKill('<span style="color:#ff4444;font-weight:bold;">🔪 SOF DETONATED:</span> '+l+' F-16V sorties destroyed on the ground. Hualien damaged.');} } },
+                { label:'EVACUATE & DISPERSE', desc:'Save aircraft. Lose 2 sorties in scramble.', cls:'opt-c', apply:()=>{ INVENTORY.f16v.remaining=Math.max(0,INVENTORY.f16v.remaining-2); addKill('<span style="color:#ffc857;font-weight:bold;">✈ AIRCRAFT DISPERSED:</span> 2 F-16V sorties lost in emergency scramble. Hualien offline temporarily.'); } },
+            ]},
+        { id:'guam_strike', day:[5,6,7], once:true, title:'🚀 DF-26 STRIKES ON ANDERSEN AFB', body:'PLA has launched DF-26 IRBMs at Andersen Air Force Base, Guam. Striking sovereign US territory — a major escalation.', effect:'<span class="eff-neg">Major escalation</span> · <span class="eff-neg">B-21 ops disrupted</span>',
+            choices: [
+                { label:'ABSORB & RETALIATE', desc:'Accept hit. Sink PLAN combatants in full conventional response.', cls:'opt-b', apply:()=>{ const targets=PLAN_SAG.filter(s=>s.alive&&!s.isAmph); const k=Math.min(crisisRng(2,4),targets.length); for(let i=0;i<k;i++){targets[i].alive=false;targets[i].hp=0;} addKill('<span style="color:#4dd0c8;font-weight:bold;">🚀 RETALIATORY STRIKE:</span> ' + k + ' PLAN combatants destroyed in response to Guam attack. ⚠ Sovereign US territory struck.'); } },
+                { label:'DE-ESCALATE', desc:'Open back-channel. Lose 1 CP but reduce tension.', cls:'opt-a', apply:()=>{ cpPool = Math.max(1, cpPool - 1); addKill('<span style="color:#ffc857;font-weight:bold;">🕊 BACK-CHANNEL:</span> Diplomatic channel opened with Beijing. Tension partially defused. −1 CP.'); } },
+            ]},
+        { id:'coalition_offer', day:[4,5,6], once:true, title:'🇦🇺 AUSTRALIA OFFERS RAAF SUPPORT', body:'Canberra has authorized RAAF F-35A operations from Darwin. 36 aircraft available within 48 hours. Will broaden the war but strengthen air defense.', effect:'<span class="eff-pos">+6 F-16V equivalent sorties</span> · <span class="eff-pos">+1 CP</span>',
+            choices: [
+                { label:'ACCEPT COALITION', desc:'Welcome Australian forces. Broadens war, strengthens defense.', cls:'opt-a', apply:()=>{ INVENTORY.f16v.remaining = Math.min(INVENTORY.f16v.total, INVENTORY.f16v.remaining + 6); cpPool++; addKill('<span style="color:#3bcb86;font-weight:bold;">🇦🇺 RAAF F-35A OPERATIONAL:</span> +6 air sorties. +1 CP. Coalition widened — Australia is now a co-belligerent.'); } },
+                { label:'DECLINE', desc:'Maintain bilateral framework. Keep escalation contained.', cls:'opt-c', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">🇦🇺 AUSTRALIAN OFFER DECLINED:</span> Maintaining bilateral framework. Escalation contained.'); } },
+            ]},
+        { id:'sub_incident', day:[3,4,5,6], once:true, title:'⚓ SSN — COLLISION RISK', body:'Virginia-class SSN reports near-collision with PLA Type 039B in the strait. Both boats gone quiet. Risk of inadvertent engagement.', effect:'<span class="eff-neg">1 SSN at risk</span> · Possible escalation',
+            choices: [
+                { label:'MAINTAIN AGGRESSIVE', desc:'Continue ops. Sub commander has weapons free.', cls:'opt-b', apply:()=>{ const subs=US_CSG.filter(s=>s.isSub&&s.alive); if(crisisProb(0.25)&&subs.length){subs[0].alive=false;subs[0].hp=0;addKill('<span style="color:#ff4444;font-weight:bold;">⚓ SSN LOST:</span> Virginia-class lost in underwater incident. All hands.');}else{const psubs=PLAN_SAG.filter(s=>s.isSub&&s.alive);if(psubs.length){psubs[0].alive=false;psubs[0].hp=0;}addKill('<span style="color:#3bcb86;font-weight:bold;">⚓ SSN ENGAGEMENT:</span> Virginia-class engages and sinks PLA submarine.');} } },
+                { label:'PULL BACK', desc:'Disengage. Lose submarine pressure for this day.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">⚓ SSN DISENGAGING:</span> Submarine pulling back. 1 day stand-down ordered.'); } },
+            ]},
+        { id:'civilian_convoy', day:[4,5,6,7], once:true, title:'🚢 CIVILIAN EVACUATION CONVOY HIT', body:'PLA AShMs struck a civilian evacuation convoy. 3 ferries hit. Est. 1,200 civilian casualties. International condemnation immediate.', effect:'<span class="eff-neg">Global outrage</span> · <span class="eff-pos">Coalition willingness+</span>',
+            choices: [
+                { label:'CONDEMN AT UN', desc:'Maximize diplomatic pressure. +1 CP from coalition partners.', cls:'opt-a', apply:()=>{ cpPool++; addKill('<span style="color:#ffc857;font-weight:bold;">🕊 UN EMERGENCY VOTE:</span> PLA faces diplomatic isolation. Coalition partners rally. +1 CP.'); } },
+                { label:'NAVAL ESCORT', desc:'Divert destroyers to protect convoys. -30 VLS from combat.', cls:'opt-c', apply:()=>{ csgVlsPool = Math.max(0, csgVlsPool - 30); addKill('<span style="color:#4dd0c8;font-weight:bold;">⚓ VLS DIVERTED:</span> −30 VLS cells allocated to convoy escort duty. Pool: ' + csgVlsPool + '/380.'); } },
+            ]},
+        { id:'cyber_retaliation', day:[2,3], once:true, title:'💻 PLA CYBER COUNTER-STRIKE', body:'PLA Unit 61398 retaliatory cyber-op against PACOM networks. SATCOM links intermittent. Targeting data delayed.', effect:'<span class="eff-neg">Intercept accuracy degraded</span>',
+            choices: [
+                { label:'BACKUP NETS', desc:'Switch to redundant systems. Partial restoration.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#4dd0c8;font-weight:bold;">💻 BACKUP COMMS:</span> Redundant systems active. Degradation limited. Targeting restored.'); } },
+                { label:'NSA COUNTER-HACK', desc:'Offensive cyber. Risk escalation but degrade PLA sensors.', cls:'opt-b', apply:()=>{ addKill('<span style="color:#3bcb86;font-weight:bold;">💻 NSA COUNTER-OP:</span> Offensive cyber successful. PLA sensor networks degraded. ⚠ Escalation risk.'); } },
+            ]},
+    ];
+
+    // ── PLA CRISIS EVENTS (shown when playing PLA) ──
+    const PLA_CRISIS_EVENTS = [
+        { id:'pla_mutiny', day:[4,5,6], once:true, title:'⚠ 73RD GROUP ARMY — MORALE CRISIS', body:'Reports from the 73rd Group Army indicate junior officers refusing embarkation orders. Troop morale crumbling after heavy losses at sea.', effect:'<span class="eff-neg">Ground assault weakened</span> · <span class="eff-neg">Troop reinforcement delayed</span>',
+            choices: [
+                { label:'POLITICAL COMMISSARS', desc:'Deploy commissars. Restore order through discipline. Some troops lost.', cls:'opt-b', apply:()=>{ ROC_DEFENSE_LINES.forEach(d=>{if(d.strength>0)d.strength=Math.min(d.maxStrength,d.strength+50);}); addKill('<span style="color:#ff9900;font-weight:bold;">🪖 COMMISSARS DEPLOYED:</span> Morale partially restored. Delayed reinforcements weaken PLA ground pressure. ROC lines reinforced.'); } },
+                { label:'PROMISE ROTATION', desc:'Promise frontline rotation. Preserves morale, delays next wave.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ff9900;font-weight:bold;">🪖 ROTATION PROMISED:</span> Next ground assault wave delayed. Morale preserved but momentum lost.'); } },
+            ]},
+        { id:'pla_logistics', day:[3,4,5], once:true, title:'🚢 LOGISTICS CHAIN UNDER STRAIN', body:'Taiwan Strait crossing losses are exceeding projections. Ammunition and fuel stocks at forward positions are critically low. PLAN logistics ships rerouting through longer southern corridor.', effect:'<span class="eff-neg">Supply shortage</span> · Next wave weakened',
+            choices: [
+                { label:'PRIORITIZE AMMO', desc:'Rush ammunition. Troops fight at full strength but fuel short.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ff9900;font-weight:bold;">🚢 AMMO PRIORITIZED:</span> Troops armed. Vehicles fuel-short. Logistics chain stretched to breaking.'); } },
+                { label:'CIVILIAN REQUISITION', desc:'Commandeer civilian shipping. International backlash but +troops.', cls:'opt-b', apply:()=>{ ROC_DEFENSE_LINES.forEach(d=>{if(d.strength>0)d.strength=Math.max(0,d.strength-30);}); addKill('<span style="color:#ff4444;font-weight:bold;">🚢 CIVILIAN SHIPS COMMANDEERED:</span> Additional troops delivered. International condemnation. ROC lines pressured.'); } },
+            ]},
+        { id:'pla_sub_detected', day:[2,3,4], once:true, title:'⚓ SUBMARINE FORCE LOSSES', body:'US Virginia-class SSNs have sunk 3 escorts in the screen. The submarine threat to the amphibious fleet is growing. PLAN ASW doctrine is failing.', effect:'<span class="eff-neg">3 escorts at risk</span> · Amphibious fleet exposed',
+            choices: [
+                { label:'TIGHTEN FORMATION', desc:'Pull escorts closer. Better ASW density but grouped targets.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ff9900;font-weight:bold;">⚓ FORMATION TIGHTENED:</span> ASW screen density improved. Fleet concentration increases vulnerability to saturation attack.'); } },
+                { label:'DEPLOY AIR ASW', desc:'Divert PLAAF sorties to ASW patrol. -80 PLAAF sorties.', cls:'opt-c', apply:()=>{ let reduced=0; PLAAF_OOB.forEach(sq=>{if(sq.alive&&sq.sorties>10){const r=Math.min(15,sq.sorties-5);sq.sorties-=r;reduced+=r;}}); addKill('<span style="color:#ff6644;font-weight:bold;">⚓ PLAAF DIVERTED TO ASW:</span> −' + reduced + ' air sorties redirected to anti-submarine patrol. Air superiority weakened.'); } },
+            ]},
+        { id:'pla_taiwan_counterstrike', day:[3,4,5,6], once:true, title:'🚀 TAIWAN HSIUNG FENG COUNTERSTRIKE', body:'Taiwan has launched a Hsiung Feng IIE cruise missile salvo at PLA staging areas in Fujian province. 12 missiles inbound. The mainland is under attack.', effect:'<span class="eff-neg">Amphibious ships at risk</span> · <span class="eff-neg">Political shock in Beijing</span>',
+            choices: [
+                { label:'ABSORB & CONTINUE', desc:'Accept damage. Mainland AD will intercept some. Stay focused.', cls:'opt-a', apply:()=>{ const amphs=PLAN_SAG.filter(s=>s.alive&&s.isAmph); const lost=Math.min(crisisRng(1,2),amphs.length); for(let i=0;i<lost;i++){amphs[i].alive=false;amphs[i].hp=0;} addKill('<span style="color:#ff4444;font-weight:bold;">🚀 HSIUNG FENG IMPACT:</span> '+lost+' transport ships destroyed at staging area. Political shock in Beijing.'); } },
+                { label:'RETALIATORY ESCALATION', desc:'Double PLARF salvo on Taiwan. Massive escalation. Base damage.', cls:'opt-b', apply:()=>{ baseHealth=Math.max(1,baseHealth-2); addKill('<span style="color:#ff4444;font-weight:bold;">🚀 RETALIATORY PLARF SALVO:</span> Massive strike on Taiwan infrastructure. Base integrity −2. ⚠ Nuclear shadow surging.'); } },
+            ]},
+        { id:'pla_diplomatic_pressure', day:[5,6,7], once:true, title:'🇷🇺 RUSSIA OFFERS SUPPORT', body:'Moscow signals willingness to conduct "military exercises" in the Sea of Japan, diverting US attention and forces. Beijing must decide whether to accept.', effect:'<span class="eff-pos">Potential US force diversion</span> · <span class="eff-neg">Escalation risk</span>',
+            choices: [
+                { label:'ACCEPT RUSSIAN SUPPORT', desc:'Russia exercises. US diverts 1 SSN. +1 CP. ⚠ Escalation.', cls:'opt-a', apply:()=>{ const subs=US_CSG.filter(s=>s.isSub&&s.alive); if(subs.length){subs[subs.length-1].alive=false;subs[subs.length-1].hp=0; addKill('<span style="color:#ff4444;font-weight:bold;">🇷🇺 RUSSIAN NAVAL EXERCISES:</span> US diverts SSN to Sea of Japan. '+subs[subs.length-1].id+' withdrawn from strait.');}else{addKill('<span style="color:#ff9900;font-weight:bold;">🇷🇺 RUSSIAN EXERCISES:</span> US submarine force already depleted. Limited diversionary effect.');} cpPool++; } },
+                { label:'DECLINE', desc:'Maintain unilateral action. Avoid global escalation.', cls:'opt-c', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">🇷🇺 RUSSIAN OFFER DECLINED:</span> Beijing prefers unilateral action. Avoids global escalation.'); } },
+            ]},
+        { id:'pla_weather', day:[3,4,5,6,7], once:true, title:'🌊 TYPHOON WARNING — STRAIT CROSSING', body:'JTWC has issued a typhoon watch for the Taiwan Strait. Sea state 5+ expected within 48 hours. Amphibious operations will be severely degraded if the storm hits.', effect:'<span class="eff-neg">Landing ops at risk</span> · Window closing',
+            choices: [
+                { label:'ACCELERATE LANDINGS', desc:'Rush all available troops now. Higher casualties but beat the storm.', cls:'opt-b', apply:()=>{ const amphs=PLAN_SAG.filter(s=>s.alive&&s.isAmph); const lost=Math.min(crisisRng(1,2),amphs.length); for(let i=0;i<lost;i++){amphs[i].alive=false;amphs[i].hp=0;} ROC_DEFENSE_LINES.forEach(d=>{if(d.strength>0)d.strength=Math.max(0,d.strength-40);}); addKill('<span style="color:#ff4444;font-weight:bold;">🌊 RUSHED CROSSING:</span> Troops delivered under storm conditions. '+lost+' transports lost to sea state. PLA ground pressure increased.'); } },
+                { label:'DELAY & SHELTER', desc:'Pull fleet back. Lose momentum but preserve ships.', cls:'opt-a', apply:()=>{ addKill('<span style="color:#ffc857;font-weight:bold;">🌊 FLEET SHELTERING:</span> Amphibious force pulled back. Next assault wave delayed. Ships preserved.'); } },
+            ]},
+        { id:'pla_carrier_loss', day:[5,6,7,8], once:true, title:'⚓ LIAONING CARRIER STRIKE GROUP HIT', body:'The Liaoning CSG providing air cover has been struck by US submarine-launched torpedoes. Liaoning is listing. J-15 operations suspended.', effect:'<span class="eff-neg">PLAAF air cover reduced</span> · <span class="eff-neg">Fleet morale impact</span>',
+            choices: [
+                { label:'SCUTTLE & REDISTRIBUTE', desc:'Abandon Liaoning. Redistribute air assets to land bases. -80 PLAAF sorties.', cls:'opt-b', apply:()=>{ let reduced=0; PLAAF_OOB.forEach(sq=>{if(sq.alive&&sq.sorties>5){const r=Math.min(15,sq.sorties-5);sq.sorties-=r;reduced+=r;}}); addKill('<span style="color:#ff4444;font-weight:bold;">⚓ LIAONING SCUTTLED:</span> −'+reduced+' PLAAF sortie capacity. A devastating blow to national prestige.'); } },
+                { label:'TOW & REPAIR', desc:'Attempt tow. Diverts 2 escorts from screen duty.', cls:'opt-a', apply:()=>{ const escorts=PLAN_SAG.filter(s=>s.alive&&!s.isAmph&&!s.isSub); const d=Math.min(2,escorts.length); for(let i=0;i<d;i++){escorts[i].alive=false;escorts[i].hp=0;} addKill('<span style="color:#ff9900;font-weight:bold;">⚓ TOW ATTEMPT:</span> '+d+' escorts diverted to tow Liaoning. Screening force weakened.'); } },
+            ]},
+        { id:'pla_cmcPressure', day:[6,7,8,9], once:true, title:'☢ CMC EMERGENCY SESSION — NUCLEAR OPTION', body:'Central Military Commission convenes emergency session. Hawks advocate tactical nuclear demonstration to force Taiwan surrender. International monitoring detects DF-41 TEL movement.', effect:'<span class="eff-neg">Nuclear Shadow +MAX if demonstrated</span> · <span class="eff-pos">Potential instant victory</span>',
+            choices: [
+                { label:'AUTHORIZE DEMONSTRATION', desc:'Detonate in open water. World changes forever. ⚠ Maximum escalation.', cls:'opt-b', apply:()=>{ if(crisisProb(0.15)){baseHealth=0;addKill('<span style="color:#ff4444;font-weight:bold;">☢ NUCLEAR DEMONSTRATION:</span> Taiwan capitulates after nuclear detonation. The world has changed forever.');}else{addKill('<span style="color:#ff4444;font-weight:bold;">☢ NUCLEAR DEMONSTRATION:</span> Taiwan refuses surrender. US nuclear escalation imminent. World on the brink of annihilation.'); cpPool+=2;} } },
+                { label:'REJECT — CONVENTIONAL ONLY', desc:'Maintain conventional operations. The Party\'s restraint earns grudging respect.', cls:'opt-a', apply:()=>{ cpPool++; addKill('<span style="color:#ffc857;font-weight:bold;">☢ CMC REJECTS NUCLEAR USE:</span> Conventional operations continue. International pressure eases slightly. +1 CP.'); } },
+            ]},
+    ];
+
+    // ── CRISIS STATE ──
+    let crisisUsed = {};
+    let pendingCrisis = null;
+    let crisisFiredThisDay = false;
+    let crisisTimer = null;
+
+    function rollCrisisEvent(day) {
+        const pool = isPlaPlayer() ? PLA_CRISIS_EVENTS : US_CRISIS_EVENTS;
+        const eligible = pool.filter(e => e.day.includes(day) && !crisisUsed[e.id] && crisisProb(0.60));
+        if (!eligible.length) return null;
+        const evt = eligible[crisisRng(0, eligible.length - 1)];
+        crisisUsed[evt.id] = true;
+        return evt;
+    }
+
+    function showCrisisEvent(evt) {
+        return new Promise(resolve => {
+            pendingCrisis = { evt, resolve };
+            const card = document.getElementById('crisisCard');
+            card.innerHTML = `
+                <div class="crisis-header">⚠ CRISIS EVENT — DAY ${dayNumber}</div>
+                <div class="crisis-title">${evt.title}</div>
+                <div class="crisis-body">${evt.body}</div>
+                <div class="crisis-effect">${evt.effect}</div>
+                <div class="crisis-choices">${evt.choices.map((c,i) => `
+                    <button class="crisis-choice-btn ${c.cls}" onclick="resolveCrisis(${i})">
+                        <span class="crisis-choice-label">OPTION ${String.fromCharCode(65+i)}</span>
+                        ${c.label}<br>
+                        <span style="font-weight:400;font-size:10px;opacity:0.8;">${c.desc}</span>
+                    </button>`).join('')}
+                </div>`;
+            document.getElementById('crisisModal').classList.add('visible');
+            // Pause the simulation
+            playing = false;
+            window._crisisOpenTs = Date.now();
+            speak('Crisis event. ' + evt.title.replace(/[^\w\s]/g,'') + '. ' + evt.body, 2);
+        });
+    }
+
+    window.resolveCrisis = function(idx) {
+        if (!pendingCrisis) return;
+        const { evt, resolve } = pendingCrisis;
+        evt.choices[idx].apply();
+        addKill('<span style="color:#f0882e;font-weight:bold;">⚠ CRISIS:</span> ' + evt.title + ' — <span style="color:#e6edf3;">' + evt.choices[idx].label + '</span>');
+        document.getElementById('crisisModal').classList.remove('visible');
+        // Resume simulation — offset dayStartTs by time spent in modal
+        if (window._crisisOpenTs) {
+            const crisisPauseMs = Date.now() - window._crisisOpenTs;
+            dayStartTs += crisisPauseMs;
+            nextEventTs += crisisPauseMs;
+            window._crisisOpenTs = 0;
+        }
+        playing = true;
+        pendingCrisis = null;
+        // Restart wave timer — it was cleared when it found playing=false
+        if (!waveTimer) {
+            waveTimer = setTimeout(spawnWave, 5000);
+        }
+        resolve();
+    };
+
+    // Schedule crisis event at 1-minute mark of current day
+    function scheduleCrisisForDay() {
+        if (crisisTimer) { clearTimeout(crisisTimer); crisisTimer = null; }
+        crisisFiredThisDay = false;
+        // Fire at 60 seconds into the day (halfway through 2-minute day)
+        crisisTimer = setTimeout(async () => {
+            if (!playing || crisisFiredThisDay) return;
+            crisisFiredThisDay = true;
+            const evt = rollCrisisEvent(dayNumber);
+            if (evt) {
+                await showCrisisEvent(evt);
+            }
+        }, 60000);
+    }
 
     let waveTimer            = null;
     let telemetryInterval    = null;
@@ -11938,6 +12166,8 @@
         // Resume wave spawning — 5 second grace period
         if (waveTimer) clearTimeout(waveTimer);
         waveTimer = setTimeout(spawnWave, 5000);
+        // ── SCHEDULE MID-DAY CRISIS EVENT ──
+        scheduleCrisisForDay();
         speak(isPlaPlayer() ? 'Attack orders confirmed. Strike packages executing.' : 'Orders confirmed.', 1);
         // ── POLITICAL BRIEFING VOICE — Days 2-15 ──────────────
         // Day 1 has its own intro narration. Days 2+ get the political
@@ -13060,6 +13290,13 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
         if (telemetryInterval)     { clearInterval(telemetryInterval);    telemetryInterval = null; }
         if (resumeInterval)        { clearInterval(resumeInterval);       resumeInterval = null; }
         if (recommendationInterval){ clearInterval(recommendationInterval); recommendationInterval = null; }
+        // ── RESET CRISIS EVENT STATE ──
+        if (crisisTimer) { clearTimeout(crisisTimer); crisisTimer = null; }
+        crisisUsed = {};
+        crisisFiredThisDay = false;
+        pendingCrisis = null;
+        window._crisisRemainingMs = 0;
+        document.getElementById('crisisModal').classList.remove('visible');
 
         friends     = JSON.parse(JSON.stringify(friendInit));
         enemies     = [];
@@ -13961,6 +14198,7 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
         nextEventTs = Date.now() + nextEventDelay;
         nextEventDelaySaved = nextEventDelay;
         waveTimer = setTimeout(() => {
+            if (!playing) { waveTimer = null; return; } // Don't advance time while paused/crisis
             dayElapsed += nextEventDelay;
             const realElapsedCheck = dayStartTs > 0 ? Date.now() - dayStartTs : dayElapsed;
             if (dayElapsed >= DAY_DURATION_MS || realElapsedCheck >= DAY_DURATION_MS) {
@@ -19106,6 +19344,8 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
     }
 
     function advanceDay() {
+                // ── GUARD: don't advance if crisis modal is open ──
+                if (pendingCrisis) return;
                 econSnapshotDay();
                 updateMarketIndex();
                 dayElapsed = 0;
@@ -19137,6 +19377,9 @@ CSIS conclusion: "The Japan basing decision is the most consequential political 
                 // AI OPPONENT deferred to confirmCPOrders — runs with fresh CP after modal
                 // Clear any pending wave timer so it doesn't fire into the modal
                 if (waveTimer) { clearTimeout(waveTimer); waveTimer = null; }
+                // ── CLEAR CRISIS TIMER — will be rescheduled in confirmCPOrders ──
+                if (crisisTimer) { clearTimeout(crisisTimer); crisisTimer = null; }
+                crisisFiredThisDay = false;
                 if (lastDayBannerDay !== dayNumber) {
                     lastDayBannerDay = dayNumber;
                     const timeOfDay = ['Dawn', 'Morning', 'Midday', 'Afternoon', 'Dusk', 'Night'][Math.floor(Math.random() * 6)];
@@ -24182,6 +24425,8 @@ ${lz.status}`
         nextEventTs        = 0;
         window._taipeiCriticalAnnounced = false;
         window._gameHasEnded = false;
+        // ── SCHEDULE MID-DAY CRISIS EVENT FOR DAY 1 ──
+        scheduleCrisisForDay();
 
         if (shuffledPlaylist.length === 0) startPlaylist();
         currentSongIndex = (currentSongIndex + 1) % shuffledPlaylist.length;
@@ -24326,6 +24571,16 @@ ${lz.status}`
                 const delay = (waveNumber === 1) ? 3000 : 35000;
                 waveTimer = setTimeout(spawnWave, delay);
             }
+            // ── CRISIS TIMER RESUME — restart with remaining time ──
+            if (!crisisFiredThisDay && !crisisTimer && window._crisisRemainingMs > 0) {
+                crisisTimer = setTimeout(async () => {
+                    if (!playing || crisisFiredThisDay) return;
+                    crisisFiredThisDay = true;
+                    const evt = rollCrisisEvent(dayNumber);
+                    if (evt) { await showCrisisEvent(evt); }
+                }, window._crisisRemainingMs);
+                window._crisisRemainingMs = 0;
+            }
             music.play().catch(() => {});
             if (musicBtn) musicBtn.textContent = '⏸';
             addKill('<span style="color:#e6edf3;font-weight:bold;">SYSTEM:</span> Resumed.');
@@ -24342,6 +24597,12 @@ ${lz.status}`
             if (telemetryInterval)     { clearInterval(telemetryInterval);     telemetryInterval = null; }
             if (resumeInterval)        { clearInterval(resumeInterval);        resumeInterval = null; }
             if (recommendationInterval){ clearInterval(recommendationInterval); recommendationInterval = null; }
+            // ── CRISIS TIMER PAUSE — track remaining time ──
+            if (crisisTimer && !crisisFiredThisDay) {
+                const elapsed = Date.now() - dayStartTs;
+                window._crisisRemainingMs = Math.max(0, 60000 - elapsed);
+                clearTimeout(crisisTimer); crisisTimer = null;
+            }
             waveTimer = null;
             document.getElementById('recommendationText').textContent = 'SYSTEM PAUSED.';
             addKill('<span style="color:#ffcc00;font-weight:bold;">SYSTEM:</span> Tactical Pause Initiated.');
